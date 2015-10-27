@@ -1,6 +1,6 @@
 class Celula
 
-  attr_reader :vizinhos
+  attr_reader :bomba, :aberto
   attr_writer :bomba, :aberto, :vizinhos
 
   def initialize (bomba)
@@ -11,10 +11,10 @@ class Celula
 
   def to_s
     if @bomba
-      "B"
-    else
-      vizinhos.to_s
+      return 'B'
     end
+
+    return @vizinhos.to_s
   end
 
   def isbomba?
@@ -25,5 +25,7 @@ class Celula
     @aberto
   end
 
-
+  def vizinhos
+    @vizinhos
+  end
 end

@@ -35,7 +35,7 @@ class Tabuleiro
     for x in (0...(@linhas)) do
       for y in (0...(@colunas)) do
         # Se o campo (x,y) não for uma bomba, verifica se seus vizinhos são
-        if @campos[x][y].isbomba?
+        if !@campos[x][y].isbomba?
           conta_bombas_adjacentes(x,y)
         end
       end
@@ -55,16 +55,14 @@ class Tabuleiro
     for x in ((lin_inicio)..(lin_final)) do
       for y in ((col_inicio)..(col_final)) do
           if @campos[linha + x][coluna + y].isbomba?
-            @campos[linha][coluna].vizinhos += 1
+            @campos[linha][coluna].vizinhos = @campos[linha][coluna].vizinhos + 1
           end
       end
     end
   end
   
   def verifica_campo (linha, coluna)
-    
-    if !@campos[linha][coluna].isaberto?
-
+    if !(@campos[linha][coluna].isaberto?)
       if @campos[linha][coluna].isbomba?
         puts linha.to_s << " " << coluna.to_s << "" <<" BOMBA!!"
         exit
@@ -97,17 +95,18 @@ class Tabuleiro
 end #class
 
 
-a = Tabuleiro.new 5,5,4
+a = Tabuleiro.new 8,8,5
 
 a.preenche_tabuleiro
 
 # Imprime a matriz de campos do tabuleiro
 for x in (0...(a.linhas)) do
   for y in (0...(a.colunas)) do
-      print(a.campos[x][y].to_s << " ")
+    printf a.campos[x][y].to_s << " "
   end
   puts
 end
+
 
 puts "Digite uma posição: "
 lin = gets.chomp()
@@ -117,7 +116,7 @@ a.verifica_campo(lin.to_i, col.to_i)
 # Imprime a matriz de campos do tabuleiro
 for x in (0...(a.linhas)) do
   for y in (0...(a.colunas)) do
-      print(a.campos[x][y].to_s << " ")
+      print(a.campos[x][y].aberto.to_s << " ")
   end
   puts
 end
