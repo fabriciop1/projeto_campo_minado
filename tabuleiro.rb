@@ -9,31 +9,36 @@ require_relative "celula.rb"
   acontece para as colunas: y == 0 e y == total_colunas-1
 
 =end
+
 class Tabuleiro
-  attr_reader :linhas, :colunas, :campos, :numero_bombas
+  attr_reader :linhas, :colunas, :numero_bombas
 
   def initialize linhas, colunas, bombas
-    @linhas = linhas
-    @colunas = colunas
+    @rows = linhas
+    @columns = colunas
     @numero_bombas = bombas
     @campos = Array.new(linhas){ Array.new(colunas){ Celula.new(false) } }
 
   end
 
-  def preenche_tabuleiro
+  def get_campo(linha, coluna)
+    @campos[linha][coluna]
+  end
+
+  def gera_bombas
 
     # Tratar a quantidade para qnd for meior qu eo numero de campos (m.n) do tabuleiro
     for i in (0...(@numero_bombas)) do
-      @campos[rand(@linhas)][rand(@colunas)].bomba = true
+      @campos[rand(@rows)][rand(@columns)].bomba = true
     end
 
     # verifica
-    gera_incidencia_bombas
+    verifica_vizinhos
   end
 
-  def gera_incidencia_bombas
-    for x in (0...(@linhas)) do
-      for y in (0...(@colunas)) do
+  def verifica_vizinhos
+    for x in (0...(@rows)) do
+      for y in (0...(@columns)) do
         # Se o campo (x,y) não for uma bomba, verifica se seus vizinhos são
         if !@campos[x][y].isbomba?
           conta_bombas_adjacentes(x,y)
@@ -49,8 +54,8 @@ class Tabuleiro
     col_inicio = (coluna == 0) ? 0 : -1
 
     # O mesmo do caso acima, mas para as última linha e coluna da matriz
-    lin_final = (linha == @linhas-1) ? 0 : 1
-    col_final = (coluna == @colunas-1) ? 0 : 1
+    lin_final = (linha == @rows-1) ? 0 : 1
+    col_final = (coluna == @columns-1) ? 0 : 1
 
     for x in ((lin_inicio)..(lin_final)) do
       for y in ((col_inicio)..(col_final)) do
@@ -61,11 +66,15 @@ class Tabuleiro
     end
   end
   
-  def verifica_campo (linha, coluna)
+  def abre_campo (linha, coluna)
+    # Caso o campo ainda não tenha sido clicado
     if !(@campos[linha][coluna].isaberto?)
+
+      # Se for bomba
       if @campos[linha][coluna].isbomba?
         puts linha.to_s << " " << coluna.to_s << "" <<" BOMBA!!"
         exit
+      # Se conter bombas vizinhas
       elsif @campos[linha][coluna].vizinhos > 0
         @campos[linha][coluna].aberto = true
       else
@@ -76,13 +85,13 @@ class Tabuleiro
         col_inicio = (coluna == 0) ? 0 : -1
 
         # O mesmo do caso acima, mas para as última linha e coluna da matriz
-        lin_final = (linha == @linhas-1) ? 0 : 1
-        col_final = (coluna == @colunas-1) ? 0 : 1
+        lin_final = (linha == @rows-1) ? 0 : 1
+        col_final = (coluna == @columns-1) ? 0 : 1
 
         for x in ((lin_inicio)..(lin_final)) do
           for y in ((col_inicio)..(col_final)) do
             @campos[linha][coluna].aberto = true
-            verifica_campo(linha+x, coluna+y)
+            abre_campo(linha+x, coluna+y)
           end
         end
       end
@@ -94,10 +103,11 @@ class Tabuleiro
 
 end #class
 
+=begin
 
 a = Tabuleiro.new 8,8,5
 
-a.preenche_tabuleiro
+a.gera_bombas
 
 # Imprime a matriz de campos do tabuleiro
 for x in (0...(a.linhas)) do
@@ -112,7 +122,7 @@ puts "Digite uma posição: "
 lin = gets.chomp()
 col = gets.chomp()
 
-a.verifica_campo(lin.to_i, col.to_i)
+a.abre_campo(lin.to_i, col.to_i)
 # Imprime a matriz de campos do tabuleiro
 for x in (0...(a.linhas)) do
   for y in (0...(a.colunas)) do
@@ -120,4 +130,5 @@ for x in (0...(a.linhas)) do
   end
   puts
 end
+=end
 
