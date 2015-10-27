@@ -10,7 +10,7 @@ class CampoMinadoApp < Gtk::Window
 
     @bombs = Array.new(@rows) { Array.new(@columns) { [true, false].sample } }
 
-    set_title "Campo Minado"
+    set_title "Celula Minado"
     set_window_position(:center)
     set_border_width 15
 
