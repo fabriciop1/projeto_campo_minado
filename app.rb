@@ -29,7 +29,7 @@ class CampoMinadoApp < Gtk::Window
     @rows = linhas
     @columns = colunas
     @bombas = bombas
-    @campos_clicados = 0
+    @campos_abertos = 0
 
     # Matriz de botões do campo minado
     @field = Array.new(linhas){ Array.new(colunas) {Board::SpaceField.new('')}}
@@ -131,7 +131,7 @@ class CampoMinadoApp < Gtk::Window
             @board.attach label, i, j, 1,1
             label.show
 
-            @campos_clicados += 1
+            @campos_abertos += 1
           end
 
           verifica_progresso
@@ -142,7 +142,7 @@ class CampoMinadoApp < Gtk::Window
   end
 
   def verifica_progresso
-    if( ((@rows*@columns) - @campos_clicados) == @bombas)
+    if( ((@rows*@columns) - @campos_abertos) == @bombas)
       message = Gtk::MessageDialog.new(:parent => self, :flags => :destroy_with_parent,
                                        :type => :info, :buttons_type => :close,
                                        :message => "Sortudo! Voce conseguiu sobreviver")

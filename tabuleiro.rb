@@ -11,13 +11,15 @@ require_relative "celula.rb"
 =end
 
 class Tabuleiro
-  attr_reader :linhas, :colunas, :numero_bombas
+  attr_reader :rows, :columns, :numero_bombas, :campos_abertos
+  attr_writer :campos_abertos
 
   def initialize linhas, colunas, bombas
     @rows = linhas
     @columns = colunas
     @numero_bombas = bombas
     @campos = Array.new(linhas){ Array.new(colunas){ Celula.new(false) } }
+    @campos_abertos = 0
 
   end
 
@@ -78,6 +80,8 @@ class Tabuleiro
       elsif @campos[linha][coluna].vizinhos > 0
         @campos[linha][coluna].aberto = true
       else
+
+
 
         ## Se a linha ou coluna forem as iniciais da matriz (0,y) ou (x,0), os loops são iniciados
         # a partir da linha ou coluna, de modo que não considera a linha (x -1) para x == 0
