@@ -6,19 +6,18 @@ class CampoMinadoApp < Gtk::Window
 
   # Constantes que armazenam as imagens utilziadas pelo jogo
   SMILE_IMG = "img/smile.png"
-  BOMB_IMG = "img/bomb2.png"
+  BOMB_IMG = "img/bomb3.png"
   LOSE_IMG = "img/lose.png"
   MISSED_BOMB_IMG = "img/live_one_day_more.png"
 
   def initialize(linhas,colunas,bombas)
     super()
-
     init_game(linhas,colunas,bombas)
 
     set_title "Campo Minado"
     set_window_position(:center)
-    set_border_width 15
-
+    #set_decorated(false)
+    set_border_width 10
     signal_connect("destroy") { Gtk.main_quit }
 
     make_screen
@@ -31,7 +30,7 @@ class CampoMinadoApp < Gtk::Window
     @bombas = bombas
     @campos_abertos = 0
 
-    # Matriz de botões do campo minado
+    # Matriz de botï¿½es do campo minado
     @field = Array.new(linhas){ Array.new(colunas) {Board::SpaceField.new('')}}
 
     @tabuleiro = Tabuleiro.new(linhas, colunas, bombas)
@@ -65,7 +64,7 @@ class CampoMinadoApp < Gtk::Window
         @field[x][y].set_y y
         @field[x][y].set_size_request 40, 40
 
-        # Anexa o botão (campo) ao tabuleiro (board) na posição (x,y)
+        # Anexa o botï¿½o (campo) ao tabuleiro (board) na posiï¿½ï¿½o (x,y)
         @board.attach @field[x][y], x, y, 1, 1
 
         # Cria o evento para quando o campo for clicado
@@ -77,25 +76,60 @@ class CampoMinadoApp < Gtk::Window
       end
     end
 
+    lbl_bombas = Gtk::Label.new
+    lbl_bombas.set_markup("<span foreground='gray' size='xx-large' weight='bold'>" << ( (@bombas < 10) ? "00" << @bombas.to_s : "0" << @bombas.to_s ) << "</span>")
 
-    hbox_newgame.add @newGame
-    # Alinha o botão do lado direito
+
+    hbox_newgame.pack_start(@newGame, :expand => false, :fill => true, :padding => 5)
+
+    # Alinha o botï¿½o do lado direito
     halign = Gtk::Alignment.new 1, 1, 0, 1
     halign.add hbox_newgame
 
     # Empilha na caixa vertical os elementos criados
+    vbox.pack_start(menu, :expand => false, :fill => true, :padding => 0)
     vbox.pack_start(halign, :expand => false, :fill => true, :padding => 5)
     vbox.pack_start(separator, :expand => false, :fill => true, :padding => 5)
     vbox.pack_start(@board, :expand => false, :fill => false, :padding => 0)
 
     # Adiciona o tabuleiro na janela
-    add vbox
+    fixed = Gtk::Fixed.new
+    fixed.put lbl_bombas, 12,41
+    fixed.put vbox, 0,0
 
+    img = Gtk::Image.new(:file => "img/pontos_bg.png")
+    fixed.put img, 2,30
+    add fixed
+    #add vbox
+
+  end
+
+  def menu
+    mb = Gtk::MenuBar.new
+
+    filemenu = Gtk::Menu.new
+    filem = Gtk::MenuItem.new "File"
+    filem.set_submenu filemenu
+
+    exit = Gtk::MenuItem.new "Exit"
+    exit.signal_connect "activate" do
+      Gtk.main_quit
+    end
+
+
+    sep = Gtk::SeparatorMenuItem.new
+
+    filemenu.append sep
+    filemenu.append exit
+
+    mb.append filem
+
+    return mb
 
   end
 
   def campo_clicado(_widget)
-    # O campo clicado é uma bomba?
+    # O campo clicado ï¿½ uma bomba?
     if @tabuleiro.get_campo(_widget.get_x,_widget.get_y).isbomba?
 
       @iconNewGame.file = LOSE_IMG
@@ -120,54 +154,53 @@ class CampoMinadoApp < Gtk::Window
 
       for i in 0..(@rows-1)
         for j in 0..(@columns-1)
-          tabuleiro = @tabuleiro.get_campo(i,j)
+          campo = @tabuleiro.get_campo(i,j)
 
-          if tabuleiro.isaberto?
+          if campo.isaberto?
             @field[i][j].hide()
             label = Gtk::Label.new #(:label => ((tabuleiro.vizinhos == 0) ? "<large>5</large> " : tabuleiro.vizinhos.to_s))
-            vizinhos = (tabuleiro.vizinhos == 0) ? " " : tabuleiro.vizinhos.to_s
+            vizinhos = (campo.vizinhos == 0) ? " - " : campo.vizinhos.to_s
             label.set_markup("<span foreground='blue' size='large'>" << (vizinhos) << "</span>")
 
             @board.attach label, i, j, 1,1
             label.show
 
-            @campos_abertos += 1
           end
-
-          verifica_progresso
         end
       end
+
+      # Verifica o numero de bombas restantes e diz se o player ganhou
+      verifica_progresso
 
     end # else
   end
 
   def verifica_progresso
-    if( ((@rows*@columns) - @campos_abertos) == @bombas)
+    msg = "Sortudo! Voce conseguiu sobreviver"
+
+    if(@tabuleiro.verifica_progresso)
       message = Gtk::MessageDialog.new(:parent => self, :flags => :destroy_with_parent,
                                        :type => :info, :buttons_type => :close,
-                                       :message => "Sortudo! Voce conseguiu sobreviver")
+                                       :message => msg)
 
 
-      message.signal_connect("response") do |widget, response|
-        case response
-          when Gtk::ResponseType::CLOSE
-            p "CLOSE"
-            message.destroy
-        end
-      end
-      message.show_all
+      message.run
+      message.destroy
 
       @board.set_sensitive(false)
     end
   end
+
 
   def load_image(file)
     pixbuf = Gdk::Pixbuf.new file
     pixmap, mask = pixbuf.render_pixmap_and_mask
     image = Gtk::Pixmap.new(pixmap, mask)
   end
+
 end
 
-window = CampoMinadoApp.new(7,7, 2)
+
+window = CampoMinadoApp.new(10,10,5)
 
 Gtk.main

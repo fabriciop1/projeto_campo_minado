@@ -21,6 +21,8 @@ class Tabuleiro
     @campos = Array.new(linhas){ Array.new(colunas){ Celula.new(false) } }
     @campos_abertos = 0
 
+    @lista_abertos = []
+
   end
 
   def get_campo(linha, coluna)
@@ -74,14 +76,19 @@ class Tabuleiro
 
       # Se for bomba
       if @campos[linha][coluna].isbomba?
-        puts linha.to_s << " " << coluna.to_s << "" <<" BOMBA!!"
+        puts " BOMBA!!"
         exit
       # Se conter bombas vizinhas
       elsif @campos[linha][coluna].vizinhos > 0
         @campos[linha][coluna].aberto = true
+
+        @campos_abertos += 1
+
+        #@lista_abertos.push(@campos[linha][coluna])
       else
 
-
+        @campos_abertos += 1
+        @campos[linha][coluna].aberto = true
 
         ## Se a linha ou coluna forem as iniciais da matriz (0,y) ou (x,0), os loops são iniciados
         # a partir da linha ou coluna, de modo que não considera a linha (x -1) para x == 0
@@ -92,10 +99,13 @@ class Tabuleiro
         lin_final = (linha == @rows-1) ? 0 : 1
         col_final = (coluna == @columns-1) ? 0 : 1
 
+
         for x in ((lin_inicio)..(lin_final)) do
           for y in ((col_inicio)..(col_final)) do
-            @campos[linha][coluna].aberto = true
-            abre_campo(linha+x, coluna+y)
+            if !(@campos[linha+x][coluna+y].isaberto?)
+              #@lista_abertos.push(@campos[linha][coluna])
+              abre_campo(linha+x, coluna+y)
+            end
           end
         end
       end
@@ -105,34 +115,7 @@ class Tabuleiro
 
   end
 
+  def verifica_progresso
+    (((@rows * @columns) - @campos_abertos) == @numero_bombas)
+  end
 end #class
-
-=begin
-
-a = Tabuleiro.new 8,8,5
-
-a.gera_bombas
-
-# Imprime a matriz de campos do tabuleiro
-for x in (0...(a.linhas)) do
-  for y in (0...(a.colunas)) do
-    printf a.campos[x][y].to_s << " "
-  end
-  puts
-end
-
-
-puts "Digite uma posição: "
-lin = gets.chomp()
-col = gets.chomp()
-
-a.abre_campo(lin.to_i, col.to_i)
-# Imprime a matriz de campos do tabuleiro
-for x in (0...(a.linhas)) do
-  for y in (0...(a.colunas)) do
-      print(a.campos[x][y].aberto.to_s << " ")
-  end
-  puts
-end
-=end
-
