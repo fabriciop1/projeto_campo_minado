@@ -1,7 +1,6 @@
 require 'gtk3'
 require_relative 'spacefield'
 require_relative 'tabuleiro'
-require_relative 'random'
 
 class CampoMinadoApp < Gtk::Window
 
