@@ -109,4 +109,31 @@ class Tabuleiro
   def is_done?
     (((@rows * @columns) - @campos_abertos) == @numero_bombas)
   end
+
+  # Retorna informações dos vizinhos de campo no tabuleiro
+  # As seguintes informações são retornadas em um array:
+  #   posição x, posição y, estado (aberto ou não) e número de vizinhos (caso esteja aberto)
+  def get_vizinhos(x,y)
+        # Se a linha ou coluna forem as iniciais da matriz (0,y) ou (x,0), os loops são iniciados
+    # a partir da linha ou coluna, de modo que não considera a linha (x -1) para x == 0
+    lin_inicio = (x == 0) ? 0 : -1
+    col_inicio = (y == 0) ? 0 : -1
+
+    # O mesmo do caso acima, mas para as última linha e coluna da matriz
+    lin_final = (x == @rows-1) ? 0 : 1
+    col_final = (y == @columns-1) ? 0 : 1
+
+    vizinhos = []
+
+    for i in ((lin_inicio)..(lin_final)) do
+      for j in ((col_inicio)..(col_final)) do
+        campo = get_campo(x+i,y+j)
+        numero_vizinhos =  campo.isaberto? ? campo.vizinhos : "-"
+        vizinhos.push({:x => x+i,:y => y+j, :aberto => campo.isaberto?, :vizinhos => numero_vizinhos})
+      end
+    end
+
+    vizinhos
+  end
+
 end #class

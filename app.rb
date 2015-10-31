@@ -23,7 +23,7 @@ class CampoMinadoApp < Gtk::Window
     set_border_width 1
 
     signal_connect("destroy") { Gtk.main_quit }
-
+    override_background_color :normal, Gdk::RGBA::new(1,1,1,1)
     make_screen
     show_all
     timer
@@ -81,6 +81,8 @@ class CampoMinadoApp < Gtk::Window
 
     @board = Gtk::Grid.new
     # Garante que todas as linhas e colunas possuam o mesmo tamanho
+    @board.set_column_spacing 5
+    @board.set_row_spacing 5
     @board.set_property "row-homogeneous", true
     @board.set_property "column-homogeneous", true
 
@@ -145,15 +147,20 @@ class CampoMinadoApp < Gtk::Window
     hbox_footer.pack_start(halg_timer, :expand => false, :fill => false, :padding => 0)
     hbox_footer.pack_start(halg_lbl_bombas, :expand => true, :fill => true, :padding => 0)
 
+    board_box = Gtk::Box.new(:horizontal, 3)
+    board_box.pack_start(@board, :expand => false, :fill => false, :padding => 5)
+    board_box.override_background_color(:normal, Gdk::RGBA.new(0.9,0.9,0.9, 0.3))
+
+
     # Empilha em uma box vertical os elementos criados
     vbox = Gtk::Box.new(:vertical, 1)
     vbox.pack_start(halg_btn_new_game, :expand => true, :fill => true, :padding => 10)
     vbox.pack_start(Gtk::Separator.new(:horizontal), :expand => false, :fill => true, :padding => 2)
-    vbox.pack_start(@board, :expand => false, :fill => false, :padding => 2)
+    vbox.pack_start(board_box, :expand => false, :fill => false, :padding => 2)
     vbox.pack_start(Gtk::Separator.new(:horizontal), :expand => false, :fill => true, :padding => 5)
     vbox.pack_start(hbox_footer, :expand => true, :fill => true, :padding => 0)
     vbox.pack_start(Gtk::Separator.new(:horizontal), :expand => false, :fill => true, :padding => 5)
-    vbox.pack_start(toolbar, :expand => true, :fill => true, :padding => 0)
+    vbox.pack_start(toolbar, :expand => true, :fill => true, :padding => 5)
 
     # Usada para ser possível dar um espaçamento lateral entre o vbox e as margens da janela
     main_box = Gtk::Box.new(:horizontal,1)
@@ -334,7 +341,6 @@ class CampoMinadoApp < Gtk::Window
   end
 
   def reset_board
-
     @timer.terminate
     @lbl_timer.label = "<span foreground='gray' size='xx-large' weight='bold'>00:00</span>"
 

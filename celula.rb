@@ -28,4 +28,5 @@ class Celula
   def vizinhos
     @vizinhos
   end
+
 end
