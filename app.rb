@@ -24,8 +24,8 @@ class CampoMinadoApp < Gtk::Window
     signal_connect("destroy") { Gtk.main_quit }
 
     make_screen
-
     show_all
+    timer
   end
 
   def init_game(linhas, colunas, bombas)
@@ -113,17 +113,6 @@ class CampoMinadoApp < Gtk::Window
     @lbl_timer = Gtk::Label.new
     @lbl_timer.set_markup("<span foreground='gray' size='xx-large' weight='bold'> 000</span>")
 
-    seg = 0
-    min = 0
-    Thread.new{
-      while true
-        seg += 1
-        @lbl_timer.set_markup("<span foreground='gray' size='xx-large' weight='bold'>" << min << ":" << seg << "</span>")
-
-        sleep(1)
-      end
-    }
-
     halign1 = Gtk::Alignment.new 1, 1, 0, 1
     halign1.add @lbl_timer
 
@@ -153,8 +142,6 @@ class CampoMinadoApp < Gtk::Window
 
     # add fixed
     add vbox
-
-    timer
   end
 
   def draw_board()
@@ -174,8 +161,8 @@ class CampoMinadoApp < Gtk::Window
             |_widget|
 
           campo_clicado(_widget)
-
-          Thread.new {
+          
+          player_ia = Thread.new {
             @lbl_player.label = PLAYER_MACHINE.to_s.concat(" está pensando...")
             if(@activatedLevel == 1)
               sleep(1)
@@ -188,7 +175,8 @@ class CampoMinadoApp < Gtk::Window
             @lbl_player.label = ""
           }
 
-          @lbl_player.label = ""
+         # player_ia.stop
+
 
         }
 
@@ -200,6 +188,8 @@ class CampoMinadoApp < Gtk::Window
     # O campo clicado e uma bomba?
     if @tabuleiro.get_campo(_widget.get_x,_widget.get_y).isbomba?
 
+      @timer.terminate
+
       @iconNewGame.file = LOSE_IMG
       #lb = Gtk::Label.new("Tst")
       @board.attach @iconBomb, _widget.get_x, _widget.get_y, 1,1
@@ -209,6 +199,7 @@ class CampoMinadoApp < Gtk::Window
       @board.set_sensitive(false)
       @sensitive = false
       #_widget.set_sensitive(false)
+
 
       get_message("Você perdeu!")
 
@@ -257,11 +248,14 @@ class CampoMinadoApp < Gtk::Window
 
 
   def get_message(message)
-    message = Gtk::MessageDialog.new(:parent => self, :flags => :destroy_with_parent,
-      :type => :info, :buttons_type => :close,
-      :message => "#{message}")
-    message.run
-    message.destroy
+    GLib::Idle.add do
+      message = Gtk::MessageDialog.new(:parent => self, :flags => :destroy_with_parent,
+                                       :type => :info, :buttons_type => :close,
+                                       :message => "#{message}")
+      message.run
+      message.destroy
+      false
+    end
   end
  
 =begin
@@ -272,11 +266,18 @@ class CampoMinadoApp < Gtk::Window
 
       linha = rand(@rows)
       coluna = rand(@columns)
-      if !(@tabuleiro.get_campo(linha,coluna).isaberto?) 
+
+      if !(@tabuleiro.get_campo(linha,coluna).isaberto?)
+
         if !(@tabuleiro.get_campo(linha,coluna).isbomba?)
+
           @tabuleiro.abre_campo(linha,coluna)
           abre_vizinhos("AI")
+
         else
+
+          @timer.stop
+
           @iconNewGame.file = LOSE_IMG
           @board.attach @iconBomb, linha, coluna, 1,1
           @iconBomb.show
@@ -284,7 +285,7 @@ class CampoMinadoApp < Gtk::Window
           @sensitive = false
           @field[linha][coluna].hide()
 
-          #get_message("Nível 1: IA perdeu!")
+          get_message("Nível 1: IA perdeu!")
         end
       else
         random_play
@@ -293,6 +294,9 @@ class CampoMinadoApp < Gtk::Window
   end
 
   def reset_board
+    @timer.terminate
+    @lbl_timer.label = "<span foreground='gray' size='xx-large' weight='bold'>00:00</span>"
+
     @tabuleiro = Tabuleiro.new(@rows, @columns, @bombas)
     @sensitive = true
     @iconNewGame.file = SMILE_IMG
@@ -311,10 +315,30 @@ class CampoMinadoApp < Gtk::Window
       end
     end
 
-
+    timer
   end
 
   def timer
+    seg = 0
+    min = 0
+    @timer = Thread.new{
+      while true
+        seg = (seg < 10) ? ("0" << seg.to_s) : seg
+        if(seg.to_i > 59)
+          seg = "00"
+          min = min.to_i + 1
+        end
+
+        min = (min.to_i < 10) ? ("0" << min.to_i.to_s) : min.to_i
+
+        @lbl_timer.label = "<span foreground='gray' size='xx-large' weight='bold'>#{min}:#{seg}</span>"
+
+        seg = seg.to_i + 1
+        sleep(1)
+      end
+    }
+
+    #@timer.join
 
   end
 

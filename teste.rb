@@ -23,5 +23,6 @@ Thread.new{
 window.add container
 window.show_all
 
+p ("00".to_i+1)
 
 Gtk.main
