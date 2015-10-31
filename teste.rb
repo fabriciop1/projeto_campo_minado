@@ -1,28 +1,4 @@
-require "gtk3"
-Gtk.init
-window = Gtk::Window.new
-window.title = "Janela Exemplo"
-window.signal_connect("destroy"){ Gtk.main_quit }
-
-container = Gtk::HBox.new
-b1 = Gtk::Button.new(:label => "BT 1")
-b2 = Gtk::Button.new(:label => "BT 2")
-b3 = Gtk::Button.new(:label => "BT 3")
-container.add b1
-container.add b2
-container.add b3
-i = 0
-Thread.new{
-  while true
-    i += 1
-    b1.label = "BT " << (i).to_s
-    p b1.label
-    sleep(1)
-  end
-}
-window.add container
-window.show_all
-
-p ("00".to_i+1)
-
-Gtk.main
+x = Thread.new { sleep 0.1; print "x"; print "y"; print "z" }
+a = Thread.new { print "a"; print "b"; sleep 0.2; print "c" }
+x.join # Let the threads finish before
+a.join # main thread exits...

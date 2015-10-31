@@ -7,7 +7,7 @@ class CampoMinadoApp < Gtk::Window
   # Constantes que armazenam as imagens utilziadas pelo jogo
   SMILE_IMG = "img/smile.png"
   BOMB_IMG = "img/bomb3.png"
-  LOSE_IMG = "img/lose.png"
+  LOSE_IMG = "img/lose-dimas.png"
   MISSED_BOMB_IMG = "img/live_one_day_more.png"
 
   PLAYER_MACHINE = "Mr. Robot"
@@ -160,25 +160,25 @@ class CampoMinadoApp < Gtk::Window
         @field[x][y].signal_connect("clicked") {
             |_widget|
 
-          campo_clicado(_widget)
-          
-          player_ia = Thread.new {
-            @lbl_player.label = PLAYER_MACHINE.to_s.concat(" está pensando...")
-            if(@activatedLevel == 1)
+          perdeu = campo_clicado(_widget)
+
+          if !perdeu
+            player_ia = Thread.new {
+              change_lbl_player("#{PLAYER_MACHINE} está pensando...")
               sleep(1)
-              random_play #IA parte 1
-            elsif(@activatedLevel == 2)
 
-            else
+              if(@activatedLevel == 1)
+                random_play #IA parte 1
+              elsif(@activatedLevel == 2)
 
-            end
-            @lbl_player.label = ""
-          }
+              else
 
-         # player_ia.stop
+              end
 
+            }
+          end
 
-        }
+        } #signal_connect
 
       end
     end
@@ -202,7 +202,8 @@ class CampoMinadoApp < Gtk::Window
 
 
       get_message("Você perdeu!")
-
+      change_lbl_player("Mr. Robot: Desculpe, mas é... ganhei!")
+      return true
     else
 
       @iconNewGame.file = MISSED_BOMB_IMG
@@ -212,6 +213,7 @@ class CampoMinadoApp < Gtk::Window
       abre_vizinhos("user")
     end # else
 
+    false
   end
 
   def abre_vizinhos (player)
@@ -263,7 +265,6 @@ class CampoMinadoApp < Gtk::Window
 =end
   def random_play
     if (@sensitive)
-
       linha = rand(@rows)
       coluna = rand(@columns)
 
@@ -273,10 +274,11 @@ class CampoMinadoApp < Gtk::Window
 
           @tabuleiro.abre_campo(linha,coluna)
           abre_vizinhos("AI")
+          change_lbl_player("Mr. Robot: Sua vez... Mr. HowYouDareChallengeMr.Robot?")
 
         else
 
-          @timer.stop
+          @timer.terminate
 
           @iconNewGame.file = LOSE_IMG
           @board.attach @iconBomb, linha, coluna, 1,1
@@ -285,12 +287,22 @@ class CampoMinadoApp < Gtk::Window
           @sensitive = false
           @field[linha][coluna].hide()
 
+          change_lbl_player("Mr. Robot: Isso foi apenas sorte sua, não vá se achando")
           get_message("Nível 1: IA perdeu!")
         end
       else
         random_play
       end
     end
+
+  end
+
+  def change_lbl_player (msg)
+    GLib::Idle.add do
+      @lbl_player.label = msg
+    false
+  end
+
   end
 
   def reset_board
