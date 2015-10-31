@@ -12,14 +12,14 @@ class CampoMinadoApp < Gtk::Window
 
   PLAYER_MACHINE = "Mr. Robot"
 
-  def initialize(linhas,colunas,bombas)
+  def initialize(linhas,colunas,bombas = rand((linhas*2)..(linhas*colunas)/2))
     super()
 
     init_game(linhas,colunas,bombas)
 
     set_title "Campo Minado"
     set_window_position(:center)
-    set_border_width 15
+    set_border_width 1
 
     signal_connect("destroy") { Gtk.main_quit }
 
@@ -49,19 +49,27 @@ class CampoMinadoApp < Gtk::Window
     vbox = Gtk::Box.new(:vertical, 1)
     hbox_newgame = Gtk::Box.new(:horizontal, 1)
     separator = Gtk::Separator.new(:horizontal)
+
     #Cria o menu para escolha de níveis
     mb = Gtk::MenuBar.new
     levelmenu = Gtk::Menu.new
+    levels = Gtk::MenuItem.new("Jogo")
     level1 = Gtk::MenuItem.new("Nível 1")
     level2 = Gtk::MenuItem.new("Nível 2")
     level3 = Gtk::MenuItem.new("Nível 3")
-    levels = Gtk::MenuItem.new("Níveis")
 
     levelmenu.append(level1)
     levelmenu.append(level2)
     levelmenu.append(level3)
 
     levels.set_submenu(levelmenu)
+
+    levelmenu.append Gtk::SeparatorMenuItem.new
+
+    exit = Gtk::MenuItem.new "Sair"
+    exit.signal_connect("activate"){Gtk.main_quit}
+
+    levelmenu.append exit
 
     mb.append(levels)
 
@@ -89,7 +97,9 @@ class CampoMinadoApp < Gtk::Window
 
     # Iniciar novo jogo caso o botão Dimas seja clicado
     @newGame.signal_connect("clicked") {|widget| reset_board }
-
+    #@newGame.signal_connect("button-press-event") do |widget, event|
+      #p "www"
+   # end
 
     level1.signal_connect("activate") do
       @activatedLevel = 1
@@ -106,42 +116,53 @@ class CampoMinadoApp < Gtk::Window
     draw_board()
 
     hbox_newgame.add @newGame
+
     # Alinha o botao do lado direito
-    halign = Gtk::Alignment.new 0.5, 1, 0, 0
-    halign.add hbox_newgame
+    halg_btn_new_game = Gtk::Alignment.new 0.5, 1, 0, 0
+    halg_btn_new_game.add hbox_newgame
 
     @lbl_timer = Gtk::Label.new
     @lbl_timer.set_markup("<span foreground='gray' size='xx-large' weight='bold'> 000</span>")
 
-    halign1 = Gtk::Alignment.new 1, 1, 0, 1
-    halign1.add @lbl_timer
-
-    hb = Gtk::Box.new(:horizontal, 1)
-    hb.pack_start(halign, :expand => false, :fill => false, :padding => 0)
-    hb.pack_start(halign1, :expand => true, :fill => true, :padding => 0)
-
-    # Empilha na caixa vertical os elementos criados
-    vbox.pack_start(mb, :expand => false, :fill => false, :padding => 0)
-    vbox.pack_start(hb, :expand => true, :fill => true, :padding => 0)
-    #vbox.pack_start(halign1, :expand => false, :fill => false, :padding => 0)
-    vbox.pack_start(Gtk::Separator.new(:horizontal), :expand => false, :fill => true, :padding => 5)
-    vbox.pack_start(@board, :expand => false, :fill => false, :padding => 0)
-    vbox.pack_start(Gtk::Separator.new(:horizontal), :expand => false, :fill => true, :padding => 5)
-    vbox.pack_start(toolbar, :expand => true, :fill => true, :padding => 3)
-
     lbl_bombas = Gtk::Label.new
     lbl_bombas.set_markup("<span foreground='gray' size='xx-large' weight='bold'>" << ( (@bombas < 10) ? "00" << @bombas.to_s : "0" << @bombas.to_s ) << "</span>")
 
-   # fixed = Gtk::Fixed.new
-   # fixed.put @lbl_timer, 12,43
+    hbox_bombs = Gtk::Box.new(:horizontal, 1)
+    hbox_bombs.pack_start(lbl_bombas, :expand => false, :fill => false, :padding => 10)
+    hbox_bombs.pack_start(Gtk::Image.new(:file => "img/bomb2.png"), :expand => false, :fill => false, :padding => 0)
 
-    # Adiciona o tabuleiro na janela
-    #fixed.put vbox, 0,0
-    #wrap_lbl_bombas = Gtk::Image.new(:file => "img/pontos_bg.png")
-    #fixed.put wrap_lbl_bombas, 2,33
+    hbox_timer = Gtk::Box.new(:horizontal, 1)
+    hbox_timer.pack_start(Gtk::Image.new(:file => "img/clock.png"), :expand => false, :fill => false, :padding => 0)
+    hbox_timer.pack_start(@lbl_timer, :expand => false, :fill => false, :padding => 10)
 
-    # add fixed
-    add vbox
+    halg_timer = Gtk::Alignment.new 1, 1, 0, 1
+    halg_timer.add hbox_timer
+
+    halg_lbl_bombas = Gtk::Alignment.new 1, 1, 0, 1
+    halg_lbl_bombas.add hbox_bombs
+
+
+    hbox_footer = Gtk::Box.new(:horizontal, 1)
+    hbox_footer.pack_start(halg_timer, :expand => false, :fill => false, :padding => 0)
+    hbox_footer.pack_start(halg_lbl_bombas, :expand => true, :fill => true, :padding => 0)
+
+    # Empilha na caixa vertical os elementos criados
+
+    #vbox.pack_start(mb, :expand => false, :fill => false, :padding => 0)
+    vbox.pack_start(halg_btn_new_game, :expand => true, :fill => true, :padding => 10)
+    vbox.pack_start(Gtk::Separator.new(:horizontal), :expand => false, :fill => true, :padding => 2)
+    vbox.pack_start(@board, :expand => false, :fill => false, :padding => 2)
+    vbox.pack_start(Gtk::Separator.new(:horizontal), :expand => false, :fill => true, :padding => 5)
+    vbox.pack_start(hbox_footer, :expand => true, :fill => true, :padding => 0)
+    vbox.pack_start(Gtk::Separator.new(:horizontal), :expand => false, :fill => true, :padding => 5)
+    vbox.pack_start(toolbar, :expand => true, :fill => true, :padding => 0)
+
+    main_box = Gtk::Box.new(:horizontal,1)
+    main_box.pack_start(vbox, :expand => true, :fill => true, :padding => 20)
+
+    add Gtk::Box.new(:vertical, 1).pack_start(mb, :expand => true, :fill => true, :padding => 0)
+                                  .pack_start(main_box, :expand => true, :fill => true, :padding => 0)
+    #add hhbox
   end
 
   def draw_board()
@@ -361,6 +382,6 @@ class CampoMinadoApp < Gtk::Window
   end
 end
 
-window = CampoMinadoApp.new(10,10,22)
+window = CampoMinadoApp.new(10,10)
 
 Gtk.main
