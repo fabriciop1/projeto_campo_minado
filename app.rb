@@ -22,7 +22,7 @@ class CampoMinadoApp < Gtk::Window
     @parent = pai
 
     # Gera um número aleatório de bombas, entre 1/3 e 1/2 do número total de casas
-    bombas = rand( Integer((linhas*colunas)/3) .. Integer((linhas*colunas)/2) )
+    bombas = rand( Integer((linhas*colunas)/4) .. Integer((linhas*colunas)/3) )
     
     init_game(linhas,colunas,bombas)
 
@@ -248,13 +248,13 @@ class CampoMinadoApp < Gtk::Window
 
       # Muda a imagem do botão de novo jogo
       @iconNewGame.file = LOSE_IMG
-
-      # Mosta um ícone de bomba no local clicado
-      @board.attach @iconBomb, _widget.get_x, _widget.get_y, 1,1
-
-      _widget.hide()
-      @iconBomb.show
-
+      #
+      # # Mosta um ícone de bomba no local clicado
+      # @board.attach @iconBomb, _widget.get_x, _widget.get_y, 1,1
+      #
+      # _widget.hide()
+      # @iconBomb.show
+      show_all_bombs
       # Desabilita o tabuleiro
       @board.set_sensitive(false)
 
@@ -374,11 +374,17 @@ class CampoMinadoApp < Gtk::Window
           @iconNewGame.file = LOSE_AI_IMG
           @board.attach @iconBomb, linha, coluna, 1,1
           @iconBomb.show
+
+          Thread.new{
+            sleep(0.3)
+            show_all_bombs
+            sleep(0.3)
+            show_message("Nível 1: #{PLAYER_MACHINE} perdeu!")
+          }
+
           @board.set_sensitive(false)
-          @field[linha][coluna].hide()
 
           change_lbl_player("#{PLAYER_MACHINE}: Isso foi apenas sorte sua...")
-          show_message("Nível 1: #{PLAYER_MACHINE} perdeu!")
         end
       else
         random_play
@@ -416,6 +422,17 @@ class CampoMinadoApp < Gtk::Window
     end
   end
   #end of function
+
+  def show_all_bombs
+    @tabuleiro.get_bomb_positions.each {
+        |bomb|
+
+      # Mosta um ícone de bomba no local clicado
+      @board.attach Gtk::Image.new(:file => BOMB_IMG).show, bomb[:x], bomb[:y], 1,1
+
+      @field[bomb[:x]][bomb[:y]].hide
+    }
+  end
 
   # Timer usado no jogo
   def timer

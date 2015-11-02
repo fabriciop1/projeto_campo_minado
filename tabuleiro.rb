@@ -19,10 +19,23 @@ class Tabuleiro
   end
 
   def gera_bombas
-    
+    @bomb_positions = []
     # Tratar a quantidade para qnd for maior que o numero de campos (m.n) do tabuleiro
-    for i in (0...@numero_bombas) do
-      @campos[rand(@rows-1)][rand(@columns-1)].bomba = true
+    for i in (0...@numero_bombas)
+
+      lin = rand(@rows)
+      col = rand(@columns)
+
+      while !(@bomb_positions.find_index({:x => lin, :y => col}).nil?)
+        lin = rand(@rows)
+        col = rand(@columns)
+      end
+
+      @campos[lin][col].bomba = true
+
+
+      # Adiciona a posição (x,y) da bomba à uma lista
+      @bomb_positions << {:x => lin, :y => col}
     end
 
     # verifica
@@ -134,6 +147,10 @@ class Tabuleiro
     end
 
     vizinhos
+  end
+
+  def get_bomb_positions
+    @bomb_positions
   end
 
 end #class
