@@ -1,28 +1,42 @@
 require 'gtk3'
+require "win32/sound"
 require_relative 'spacefield'
 require_relative 'tabuleiro'
+
+include Win32
 
 class CampoMinadoApp < Gtk::Window
 
   # Constantes que armazenam as imagens utilziadas pelo jogo
   SMILE_IMG = "img/smile.png"
   BOMB_IMG = "img/bomb3.png"
+  BOMB_QUESTION_IMG = "img/bomb_question.png"
   LOSE_IMG = "img/lose-dimas.png"
   LOSE_AI_IMG = "img/lose.png"
   MISSED_BOMB_IMG = "img/live_one_day_more.png"
 
-  PLAYER_MACHINE = "Mr. Robot"
+  PLAYER_MACHINE = "Estudante de PLP"
 
-  def initialize(linhas,colunas,bombas = rand((linhas*2)..(linhas*colunas)/2))
+  def initialize(linhas,colunas, pai)
     super()
+    @parent = pai
 
+    # Gera um número aleatório de bombas, entre 1/3 e 1/2 do número total de casas
+    bombas = rand( Integer((linhas*colunas)/3) .. Integer((linhas*colunas)/2) )
+    
     init_game(linhas,colunas,bombas)
 
     set_title "Campo Minado"
     set_window_position(:center)
     set_border_width 1
+    set_icon("img/bomb2.png")
+    self.resizable = (false)
 
-    signal_connect("destroy") { Gtk.main_quit }
+    signal_connect("destroy"){
+      Gtk.main_quit
+      #destroy
+     # @parent.show
+    }
     override_background_color :normal, Gdk::RGBA::new(1,1,1,1)
     make_screen
     show_all
@@ -33,6 +47,8 @@ class CampoMinadoApp < Gtk::Window
     @rows = linhas
     @columns = colunas
     @bombas = bombas
+
+    @marked_bombs = 0
 
     # Matriz de bot�es do campo minado
     @field = Array.new(linhas){ Array.new(colunas) {Board::SpaceField.new('')}}
@@ -48,22 +64,32 @@ class CampoMinadoApp < Gtk::Window
     mb = Gtk::MenuBar.new
     levelmenu = Gtk::Menu.new
     levels = Gtk::MenuItem.new("Jogo")
+
+    novo_jogo = Gtk::MenuItem.new("Novo")
+    novo_jogo.signal_connect("activate"){
+      window.destroy
+      set_modal(false)
+      @parent.show
+
+    }
+
     level1 = Gtk::MenuItem.new("Nível 1")
     level2 = Gtk::MenuItem.new("Nível 2")
     level3 = Gtk::MenuItem.new("Nível 3")
 
-    levelmenu.append(level1)
-    levelmenu.append(level2)
-    levelmenu.append(level3)
+    #levelmenu.append(level1)
+    #levelmenu.append(level2)
+    #levelmenu.append(level3)
+    levelmenu.append(novo_jogo)
 
     levels.set_submenu(levelmenu)
 
     levelmenu.append Gtk::SeparatorMenuItem.new
 
-    exit = Gtk::MenuItem.new "Sair"
-    exit.signal_connect("activate"){Gtk.main_quit}
+    exit_btn = Gtk::MenuItem.new "Sair"
+    exit_btn.signal_connect("activate"){ Gtk.main_quit }
 
-    levelmenu.append exit
+    levelmenu.append exit_btn
 
     mb.append(levels)
 
@@ -81,30 +107,21 @@ class CampoMinadoApp < Gtk::Window
 
     @board = Gtk::Grid.new
     # Garante que todas as linhas e colunas possuam o mesmo tamanho
-    @board.set_column_spacing 5
-    @board.set_row_spacing 5
-    @board.set_property "row-homogeneous", true
-    @board.set_property "column-homogeneous", true
+    @board.set_column_spacing 3
+    @board.set_row_spacing 3
+    @board.set_row_homogeneous true
+    @board.set_column_homogeneous true
 
     # Adiciona uma imagem ao bot�o
     @iconNewGame = Gtk::Image.new(:file => SMILE_IMG)
     @iconBomb = Gtk::Image.new(:file => BOMB_IMG)
 
-    @newGame.add @iconNewGame #Gtk::Box.new(:horizontal, 0).pack_start(@iconNewGame, :expand => false, :fill => true, :padding => 0)
+    @newGame.add @iconNewGame #Gtk::Box.new(:horizontal, 0)..pack_start(button1, :expand => false, :fill => true, :padding => 0)
 
     # Iniciar novo jogo caso o botão Dimas seja clicado
     @newGame.signal_connect("clicked") {|widget| reset_board }
 
-    level1.signal_connect("activate") do
-      @activatedLevel = 1
-    end
-    level2.signal_connect("activate") do 
-      @activatedLevel = 2
-    end
-           
-    level3.signal_connect("activate") do
-      @activatedLevel = 3
-    end
+    verify_level(level1, level2, level3)
 
     # Desenha o tabuleiro na janela
     draw_board()
@@ -122,12 +139,12 @@ class CampoMinadoApp < Gtk::Window
     @lbl_timer.set_markup("<span foreground='gray' size='xx-large' weight='bold'> 000</span>")
 
     # Mostra o número de bombas presentes no campo
-    lbl_bombas = Gtk::Label.new
-    lbl_bombas.set_markup("<span foreground='gray' size='xx-large' weight='bold'>" << ( (@bombas < 10) ? "00" << @bombas.to_s : "0" << @bombas.to_s ) << "</span>")
+    @lbl_bombas = Gtk::Label.new
+    @lbl_bombas.set_markup("<span foreground='gray' size='xx-large' weight='bold'>" << ( (@bombas < 10) ? "00" << @bombas.to_s : "0" << @bombas.to_s ) << "</span>")
 
     # Box horizontal que engloba o label de bombas e uma imagem
     hbox_bombs = Gtk::Box.new(:horizontal, 1)
-    hbox_bombs.pack_start(lbl_bombas, :expand => false, :fill => false, :padding => 10)
+    hbox_bombs.pack_start(@lbl_bombas, :expand => false, :fill => false, :padding => 10)
     hbox_bombs.pack_start(Gtk::Image.new(:file => "img/bomb2.png"), :expand => false, :fill => false, :padding => 0)
 
     # Box horizontal que engloba o timer e uma imagem
@@ -147,20 +164,22 @@ class CampoMinadoApp < Gtk::Window
     hbox_footer.pack_start(halg_timer, :expand => false, :fill => false, :padding => 0)
     hbox_footer.pack_start(halg_lbl_bombas, :expand => true, :fill => true, :padding => 0)
 
-    board_box = Gtk::Box.new(:horizontal, 3)
-    board_box.pack_start(@board, :expand => false, :fill => false, :padding => 5)
-    board_box.override_background_color(:normal, Gdk::RGBA.new(0.9,0.9,0.9, 0.3))
+    # Place the board in a frame, so that it can have a border around it
+    frm_inner_box = Gtk::Box.new(:horizontal, 1).pack_start(@board, :expand => false, :fill => false, :padding => 3)
+    frame = Gtk::Frame.new
+    frame.add Gtk::Box.new(:vertical, 1).pack_start(frm_inner_box, :expand => false, :fill => false, :padding => 3)
+    frame.override_background_color(:normal, Gdk::RGBA.new(0.9,0.9,0.9, 0.6))
 
 
     # Empilha em uma box vertical os elementos criados
     vbox = Gtk::Box.new(:vertical, 1)
     vbox.pack_start(halg_btn_new_game, :expand => true, :fill => true, :padding => 10)
-    vbox.pack_start(Gtk::Separator.new(:horizontal), :expand => false, :fill => true, :padding => 2)
-    vbox.pack_start(board_box, :expand => false, :fill => false, :padding => 2)
-    vbox.pack_start(Gtk::Separator.new(:horizontal), :expand => false, :fill => true, :padding => 5)
-    vbox.pack_start(hbox_footer, :expand => true, :fill => true, :padding => 0)
-    vbox.pack_start(Gtk::Separator.new(:horizontal), :expand => false, :fill => true, :padding => 5)
-    vbox.pack_start(toolbar, :expand => true, :fill => true, :padding => 5)
+        .pack_start(Gtk::Separator.new(:horizontal), :expand => false, :fill => true, :padding => 2)
+        .pack_start(frame, :expand => false, :fill => false, :padding => 2)
+        .pack_start(Gtk::Separator.new(:horizontal), :expand => false, :fill => true, :padding => 5)
+        .pack_start(hbox_footer, :expand => true, :fill => true, :padding => 0)
+        .pack_start(Gtk::Separator.new(:horizontal), :expand => false, :fill => true, :padding => 5)
+        .pack_start(toolbar, :expand => true, :fill => true, :padding => 5)
 
     # Usada para ser possível dar um espaçamento lateral entre o vbox e as margens da janela
     main_box = Gtk::Box.new(:horizontal,1)
@@ -168,7 +187,7 @@ class CampoMinadoApp < Gtk::Window
 
     # Adiciona o menu e os outros elementos criados à janela
     add Gtk::Box.new(:vertical, 1).pack_start(mb, :expand => true, :fill => true, :padding => 0)
-                                  .pack_start(main_box, :expand => true, :fill => true, :padding => 0)
+            .pack_start(main_box, :expand => true, :fill => true, :padding => 0)
 
   end
 
@@ -185,6 +204,8 @@ class CampoMinadoApp < Gtk::Window
         # Anexa o botao (campo) ao tabuleiro (board) na posicao (x,y)
         @board.attach @field[x][y], x, y, 1, 1
 
+        #Cria o evento para quando o campo for clicado com o botão esquerdo
+        verify_right_click(x, y)
         # Cria o evento para quando o campo for clicado
         @field[x][y].signal_connect("clicked") {
           |_widget|
@@ -209,10 +230,10 @@ class CampoMinadoApp < Gtk::Window
 
               end
 
-            }
+            } #end of Thread
           end
 
-        } #signal_connect
+        } # end of signal_connect
 
       end
     end
@@ -222,7 +243,6 @@ class CampoMinadoApp < Gtk::Window
   def campo_clicado(_widget)
     # O campo clicado e uma bomba?
     if @tabuleiro.get_campo(_widget.get_x,_widget.get_y).isbomba?
-
       # Para o timer
       @timer.terminate
 
@@ -238,8 +258,12 @@ class CampoMinadoApp < Gtk::Window
       # Desabilita o tabuleiro
       @board.set_sensitive(false)
 
-      get_message("Você perdeu!")
-      change_lbl_player("Mr. Robot: Desculpe, mas é... ganhei!")
+      #show_message("Você perdeu!")
+      change_lbl_player("#{PLAYER_MACHINE} lives!")
+      a = Thread.new{
+        sleep(0.3)
+        Sound.play("./sound/bomb.wav") # play a file from disk
+      }
       return true
     else
 
@@ -281,13 +305,44 @@ class CampoMinadoApp < Gtk::Window
 
   def verifica_progresso
     if @tabuleiro.is_done?
-      get_message("Você conseguiu sobreviver!")
+      show_message("Você conseguiu sobreviver!")
       @board.set_sensitive(false)
     end
   end
 
+  def verify_right_click(i, j)
+    @field[i][j].signal_connect("button_press_event") do |widget, event|
+      if (event.button == 3)
 
-  def get_message(message)
+        if @marked_bombs <= @bombas
+          # Se o botão aida não tiver sido marcado
+          if @field[i][j].image == nil
+
+            @marked_bombs += 1
+            image = Gtk::Image.new(:file => BOMB_QUESTION_IMG)
+            #@board.attach image, i, j, 1, 1
+
+            @field[i][j].image = image
+            image.show
+            @tabuleiro.get_campo(i,j).aberto = true
+
+          # Se o botão clicado não esctiver marcado e o número de bombas marcados for maior que zero
+          elsif  (@marked_bombs > 0) && (@field[i][j].image != nil)
+            @marked_bombs -= 1
+            @field[i][j].image = nil
+          end
+
+        end
+
+        bombas_restantes = (@bombas - @marked_bombs)
+        @lbl_bombas.set_markup("<span foreground='gray' size='xx-large' weight='bold'>" << ( (bombas_restantes < 10) ? "00" << bombas_restantes.to_s : "0" << bombas_restantes.to_s ) << "</span>")
+
+      end
+    end
+
+  end   
+    
+  def show_message(message)
     GLib::Idle.add do
       message = Gtk::MessageDialog.new(:parent => self, :flags => :destroy_with_parent,
         :type => :info, :buttons_type => :close,
@@ -311,10 +366,9 @@ class CampoMinadoApp < Gtk::Window
 
           @tabuleiro.abre_campo(linha,coluna)
           abre_vizinhos("AI")
-          change_lbl_player("Mr. Robot: Sua vez... Mr. HowYouDareChallengeMr.Robot?")
+          change_lbl_player("#{PLAYER_MACHINE}: Sua vez...")
 
         else
-
           @timer.terminate
 
           @iconNewGame.file = LOSE_AI_IMG
@@ -323,8 +377,8 @@ class CampoMinadoApp < Gtk::Window
           @board.set_sensitive(false)
           @field[linha][coluna].hide()
 
-          change_lbl_player("Mr. Robot: Isso foi apenas sorte sua, não vá se achando")
-          get_message("Nível 1: IA perdeu!")
+          change_lbl_player("#{PLAYER_MACHINE}: Isso foi apenas sorte sua...")
+          show_message("Nível 1: #{PLAYER_MACHINE} perdeu!")
         end
       else
         random_play
@@ -339,30 +393,29 @@ class CampoMinadoApp < Gtk::Window
       false
     end
   end
-
+  
+  # New game
   def reset_board
-    @timer.terminate
-    @lbl_timer.label = "<span foreground='gray' size='xx-large' weight='bold'>00:00</span>"
-
-    @tabuleiro = Tabuleiro.new(@rows, @columns, @bombas)
-    @iconNewGame.file = SMILE_IMG
-
-    @board.set_sensitive(true)
-
-    for x in 0..(@rows-1)
-      for y in 0..(@columns-1)
-        if !@field[x][y].visible?
-          @field[x][y].show
-        end
-        if @label[x][y].class.to_s == "Gtk::Label"
-          @label[x][y].set_markup("")
-        end
-
-      end
-    end
-
-    timer
+    window.destroy
+    set_modal(false)
+    window = CampoMinadoApp.new(@rows, @columns, @parent).set_modal(true)
   end
+  # end of method
+  
+  #verify which IA level the user wants to play
+  def verify_level(level1, level2, level3)
+    level1.signal_connect("activate") do
+      @activatedLevel = 1
+    end
+    level2.signal_connect("activate") do 
+      @activatedLevel = 2
+    end
+               
+    level3.signal_connect("activate") do
+      @activatedLevel = 3
+    end
+  end
+  #end of function
 
   # Timer usado no jogo
   def timer
@@ -386,20 +439,32 @@ class CampoMinadoApp < Gtk::Window
         sleep(1)
       end
     }
-
   end
+  # end of method
 
+  # verify if the board is enable for the user to play
   def is_board_enable?
     @board.sensitive?
   end
 
+  def exit_game
+    self.destroy
+    @parent.show
+  end
+
+  #load an image to be put to the button
   def load_image(file)
     pixbuf = Gdk::Pixbuf.new file
     pixmap, mask = pixbuf.render_pixmap_and_mask
     image = Gtk::Pixmap.new(pixmap, mask)
   end
+  #end of function
+  
 end
+#end of class
 
-window = CampoMinadoApp.new(10,10)
+#main()
+#window = CampoMinadoApp.new(10,10)
 
-Gtk.main
+#Gtk.main
+#end of main()

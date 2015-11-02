@@ -9,7 +9,7 @@ module Board
     type_register
 
     def initialize label
-      super("label" => label.to_s)
+      label == "" ? super() : super("label" => label.to_s)
       @x = nil
       @y = nil
     end

@@ -19,10 +19,10 @@ class Tabuleiro
   end
 
   def gera_bombas
-
+    
     # Tratar a quantidade para qnd for maior que o numero de campos (m.n) do tabuleiro
-    for i in (0...(@numero_bombas)) do
-      @campos[rand(@rows)][rand(@columns)].bomba = true
+    for i in (0...@numero_bombas) do
+      @campos[rand(@rows-1)][rand(@columns-1)].bomba = true
     end
 
     # verifica
