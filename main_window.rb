@@ -1,5 +1,6 @@
 require 'gtk3'
 require_relative 'app.rb'
+require_relative 'artificial_intelligence.rb'
 
 class MainWindow < Gtk::Window
   LOGO_IMG = "img/big_bomb.png"
@@ -14,6 +15,7 @@ class MainWindow < Gtk::Window
     signal_connect("destroy") { Gtk.main_quit }
     override_background_color :normal, Gdk::RGBA::new(1,1,1,1)
     make_screen
+
     show_all
   end
 
@@ -33,7 +35,7 @@ class MainWindow < Gtk::Window
         .pack_start(large, :expand => true, :fill => true, :padding => 0)
 
     level1 = Gtk::RadioButton.new(:label => "Facil")
-    level2 = Gtk::RadioButton.new(:label => "Um pouco mais dificil", :member => level1).set_sensitive(false)
+    level2 = Gtk::RadioButton.new(:label => "Um pouco mais dificil", :member => level1)
     level3 = Gtk::RadioButton.new(:label => "Sou masoquista", :member => level1).set_sensitive(false)
 
     lbl_level = Gtk::Label.new(" Nivel:")
@@ -70,6 +72,9 @@ class MainWindow < Gtk::Window
       else
         linhas, colunas = 12, 12
       end
+
+      level_choosen = (level1.active?) ? 1 : ((level2.active?) ? 2 : 3)
+
       CampoMinadoApp.new(linhas, colunas, self).set_modal(true)
     end
 

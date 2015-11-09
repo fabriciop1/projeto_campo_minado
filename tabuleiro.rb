@@ -1,13 +1,11 @@
 require_relative "celula.rb"
 
 class Tabuleiro
-  attr_reader :rows, :columns, :numero_bombas, :campos_abertos
+  attr_reader :rows, :columns, :numero_bombas, :campos_abertos, :campos
   attr_writer :campos_abertos
 
   def initialize linhas, colunas, bombas
-    @rows = linhas
-    @columns = colunas
-    @numero_bombas = bombas
+    @rows, @columns, @numero_bombas = linhas, colunas, bombas
     @campos = Array.new(linhas){ Array.new(colunas){ Celula.new(false) } }
     @campos_abertos = 0
 
@@ -140,17 +138,41 @@ class Tabuleiro
 
     for i in ((lin_inicio)..(lin_final)) do
       for j in ((col_inicio)..(col_final)) do
-        campo = get_campo(x+i,y+j)
-        numero_vizinhos =  campo.isaberto? ? campo.vizinhos : "-"
-        vizinhos.push({:x => x+i,:y => y+j, :aberto => campo.isaberto?, :vizinhos => numero_vizinhos})
+        if (x+i != x) || (y+j != y)
+          campo = get_campo(x+i,y+j)
+          numero_vizinhos =  campo.isaberto? ? campo.vizinhos : "-"
+          vizinhos.push({:x => x+i,:y => y+j, :aberto => campo.isaberto?, :vizinhos => numero_vizinhos})
+        end
       end
     end
-
+    
     vizinhos
   end
 
   def get_bomb_positions
     @bomb_positions
+  end
+
+  def self.get_all_opened(vizinhos)
+    count = 0
+    vizinhos.each do |campo|
+      if(campo[:aberto])
+        count += 1
+      end
+    end
+
+    count
+  end
+
+  def self.get_neighboors_closed(vizinhos)
+    list = []
+    vizinhos.each do |campo|
+      if !(campo[:aberto])
+        list << {:x => campo[:x],:y => campo[:y]}
+      end
+    end
+
+    list
   end
 
 end #class

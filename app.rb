@@ -1,9 +1,9 @@
 require 'gtk3'
-require "win32/sound"
+#require "win32/sound"
 require_relative 'spacefield'
 require_relative 'tabuleiro'
 
-include Win32
+#include Win32
 
 class CampoMinadoApp < Gtk::Window
 
@@ -39,15 +39,15 @@ class CampoMinadoApp < Gtk::Window
     }
     override_background_color :normal, Gdk::RGBA::new(1,1,1,1)
     make_screen
+    @AI = ArtificialIntelligence.new(2,@tabuleiro)
+
     show_all
     timer
+
   end
 
   def init_game(linhas, colunas, bombas)
-    @rows = linhas
-    @columns = colunas
-    @bombas = bombas
-
+    @rows, @columns, @bombas= linhas, colunas, bombas
     @marked_bombs = 0
 
     # Matriz de bot�es do campo minado
@@ -214,21 +214,19 @@ class CampoMinadoApp < Gtk::Window
           perdeu = campo_clicado(_widget)
 
           if !perdeu
+
+            e = @AI.choose_field(@tabuleiro)
+
             # Cria uma nova Thread para a IA jogar, e espera 1 segundo
             # para que o jogador possa ver onde a IA jogou
+
             player_ia = Thread.new {
 
               change_lbl_player("#{PLAYER_MACHINE} está pensando...")
               sleep(1)
               @board.set_sensitive(true)
 
-              if(@activatedLevel == 1)
-                random_play #IA parte 1
-              elsif(@activatedLevel == 2)
-
-              else
-
-              end
+              machine_play(e)
 
             } #end of Thread
           end
@@ -260,10 +258,10 @@ class CampoMinadoApp < Gtk::Window
 
       #show_message("Você perdeu!")
       change_lbl_player("#{PLAYER_MACHINE} lives!")
-      a = Thread.new{
-        sleep(0.3)
-        Sound.play("./sound/bomb.wav") # play a file from disk
-      }
+      # a = Thread.new{
+      #   sleep(0.3)
+      #   Sound.play("./sound/bomb.wav") # play a file from disk
+      # }
       return true
     else
 
@@ -355,10 +353,13 @@ class CampoMinadoApp < Gtk::Window
  
 
   # Method that corresponds to the AI part I of the game (random choices of places to play)
-  def random_play
+  def machine_play(coord)
     if (is_board_enable?)
-      linha = rand(@rows)
-      coluna = rand(@columns)
+      p coord
+      p coord[:x]
+      p coord[:y]
+      linha = coord[:x]
+      coluna = coord[:y]
 
       if !(@tabuleiro.get_campo(linha,coluna).isaberto?)
 
@@ -386,8 +387,6 @@ class CampoMinadoApp < Gtk::Window
 
           change_lbl_player("#{PLAYER_MACHINE}: Isso foi apenas sorte sua...")
         end
-      else
-        random_play
       end
     end
 
