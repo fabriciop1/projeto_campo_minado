@@ -4,19 +4,19 @@ class Tabuleiro
   attr_reader :rows, :columns, :numero_bombas, :campos_abertos, :campos
   attr_writer :campos_abertos
 
-  def initialize linhas, colunas, bombas
+  def initialize linhas, colunas, bombas, widget
     @rows, @columns, @numero_bombas = linhas, colunas, bombas
     @campos = Array.new(linhas){ Array.new(colunas){ Celula.new(false) } }
     @campos_abertos = 0
 
-    gera_bombas
+    gera_bombas(widget)
   end
 
   def get_campo(linha, coluna)
     @campos[linha][coluna]
   end
 
-  def gera_bombas
+  def gera_bombas(widget)
     @bomb_positions = []
     # Tratar a quantidade para qnd for maior que o numero de campos (m.n) do tabuleiro
     for i in (0...@numero_bombas)
@@ -24,7 +24,7 @@ class Tabuleiro
       lin = rand(@rows)
       col = rand(@columns)
 
-      while !(@bomb_positions.find_index({:x => lin, :y => col}).nil?)
+    while !(@bomb_positions.find_index({:x => lin, :y => col}).nil?) || (lin == widget.get_x && col == widget.get_y)        
         lin = rand(@rows)
         col = rand(@columns)
       end
@@ -115,10 +115,9 @@ class Tabuleiro
     end
   end
 
-  # Verifica se os campos restantes são todos bombas, se sim,
-  # retorna true
+  # Verifica se os campos restantes são todos bombas, se sim, retorna true
   def is_done?
-    (((@rows * @columns) - @campos_abertos) == @numero_bombas)
+    return (((@rows * @columns) - @campos_abertos) == @numero_bombas)
   end
 
   # Retorna informações dos vizinhos de campo no tabuleiro
@@ -160,8 +159,7 @@ class Tabuleiro
         count += 1
       end
     end
-
-    count
+    return count
   end
 
   def self.get_neighboors_closed(vizinhos)
@@ -172,7 +170,7 @@ class Tabuleiro
       end
     end
 
-    list
+    return list
   end
 
 end #class

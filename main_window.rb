@@ -22,29 +22,29 @@ class MainWindow < Gtk::Window
   def make_screen
     logo = Gtk::Image.new(:file => LOGO_IMG)
 
-    small = Gtk::RadioButton.new(:label => 'Pequeno (5 x 5)')
-    medium = Gtk::RadioButton.new(:label => 'Medio (8 x 8)', :member => small)
-    large = Gtk::RadioButton.new(:label => 'Grande (12 x 12)', :member => small)
+    small = Gtk::RadioButton.new(:label => 'Pequeno (8 x 8)')
+    medium = Gtk::RadioButton.new(:label => 'Médio (12 x 12)', :member => small)
+    large = Gtk::RadioButton.new(:label => 'Grande (14 x 14)', :member => small)
 
     label = Gtk::Label.new(" Tamanho:")
 
     bx_tam = Gtk::Box.new(:vertical, 3)
     bx_tam.pack_start(label, :expand => true, :fill => true, :padding => 8)
-        .pack_start(small, :expand => true, :fill => true, :padding => 0)
-        .pack_start(medium, :expand => true, :fill => true, :padding => 0)
-        .pack_start(large, :expand => true, :fill => true, :padding => 0)
+    bx_tam.pack_start(small, :expand => true, :fill => true, :padding => 0)
+    bx_tam.pack_start(medium, :expand => true, :fill => true, :padding => 0)
+    bx_tam.pack_start(large, :expand => true, :fill => true, :padding => 0)
 
-    level1 = Gtk::RadioButton.new(:label => "Facil")
-    level2 = Gtk::RadioButton.new(:label => "Um pouco mais dificil", :member => level1)
-    level3 = Gtk::RadioButton.new(:label => "Sou masoquista", :member => level1).set_sensitive(false)
+    level1 = Gtk::RadioButton.new(:label => "Fácil")
+    level2 = Gtk::RadioButton.new(:label => "Médio", :member => level1)
+    level3 = Gtk::RadioButton.new(:label => "Difícil", :member => level1)
 
-    lbl_level = Gtk::Label.new(" Nivel:")
+    lbl_level = Gtk::Label.new(" Nível:")
 
     bx_lvl = Gtk::Box.new(:vertical, 3)
     bx_lvl.pack_start(lbl_level, :expand => true, :true => true, :padding => 8)
-        .pack_start(level1, :expand => true, :fill => true, :padding => 0)
-        .pack_start(level2, :expand => true, :fill => true, :padding => 0)
-        .pack_start(level3, :expand => true, :fill => true, :padding => 0)
+    bx_lvl.pack_start(level1, :expand => true, :fill => true, :padding => 0)
+    bx_lvl.pack_start(level2, :expand => true, :fill => true, :padding => 0)
+    bx_lvl.pack_start(level3, :expand => true, :fill => true, :padding => 0)
 
     hbox = Gtk::Box.new(:horizontal, 1)
     hbox.pack_start(bx_tam, :expand => true, :true => true, :padding => 8)
@@ -54,8 +54,7 @@ class MainWindow < Gtk::Window
     frame.set_hexpand true
     frame.set_vexpand true
     frame.override_background_color(:normal, Gdk::RGBA.new(0.9,0.9,0.9, 0.4))
-    frame.add Gtk::Box.new(:vertical,1).pack_start(hbox, :expand => true, :true => true, :padding => 10)
-                  .pack_start(Gtk::Label.new(" "), :expand => true, :true => true, :padding => 10)
+    frame.add Gtk::Box.new(:vertical,1).pack_start(hbox, :expand => true, :true => true, :padding => 10).pack_start(Gtk::Label.new(" "), :expand => true, :true => true, :padding => 10)
 
     lbl = Gtk::Label.new
     lbl.set_markup("<span size='large'> Jogar </span>")
@@ -66,16 +65,16 @@ class MainWindow < Gtk::Window
     jogar.signal_connect("clicked") do |widget|
       hide
       if small.active?
-        linhas, colunas = 5, 5
-      elsif medium.active?
         linhas, colunas = 8, 8
-      else
+      elsif medium.active?
         linhas, colunas = 12, 12
+      else
+        linhas, colunas = 14, 14
       end
 
-      level_choosen = (level1.active?) ? 1 : ((level2.active?) ? 2 : 3)
+      level_chosen = (level1.active?) ? 1 : ((level2.active?) ? 2 : 3)
 
-      CampoMinadoApp.new(linhas, colunas, self).set_modal(true)
+      CampoMinadoApp.new(level_chosen, linhas, colunas, self).set_modal(true)
     end
 
     fixed = Gtk::Fixed.new

@@ -32,13 +32,13 @@ class ArtificialIntelligence
         field = random_play
       end
     else
-
+      field = calculate_probability()
     end
     p "Bombas? " << [@bomb_fields].sample.to_s
     p "Livres? " << [@free_fields].sample.to_s
     p "Possiveis? " << [@possible_bombs].sample.to_s
 
-    field
+    return field
   end
 
 =begin
@@ -126,7 +126,7 @@ class ArtificialIntelligence
       coluna = rand(0..(@tabuleiro.columns-1))
     end
 
-    {:x => linha, :y => coluna}
+    return {:x => linha, :y => coluna}
   end
 
   def printt
@@ -143,4 +143,14 @@ class ArtificialIntelligence
       @tabuleiro.get_campo(field[:x], field[:y]).isaberto?
     end
   end
+  
+  # define the 3rd level of the artificial intelligence, where random plays are avoided 
+  def calculate_probability()
+    for i in 0..(@tabuleiro.rows-1)
+      for j in 0..(@tabuleiro.columns-1)
+        
+      end
+    end
+  end
+  
 end #class
