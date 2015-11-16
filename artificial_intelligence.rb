@@ -1,7 +1,7 @@
 require_relative 'tabuleiro.rb'
 class ArtificialIntelligence
 
-  def initialize (level,tabuleiro = nil)
+  def initialize (level = 1,tabuleiro = nil)
     @bomb_fields = Array.new(){Hash.new()}
     @free_fields = []
     @possible_bombs = []
@@ -10,6 +10,7 @@ class ArtificialIntelligence
   end
 
   def choose_field(tabuleiro = nil)
+    p "Level: " << @level.to_s
     @tabuleiro = tabuleiro
     field = Hash.new
 
@@ -18,17 +19,16 @@ class ArtificialIntelligence
     if @level == 1
       field = random_play
     elsif @level == 2
-      mark_bombs
+      mark_bombs if (@free_fields.size == 0)
 
       if @free_fields.size > 0
         field = @free_fields[0]
-        @free_fields.delete_at(0)
+        @free_fields.delete_at(0) # remove the field randomly chosen from the list
       elsif @possible_bombs.size > 0
         index = rand(0..(@possible_bombs.size-1))
         field = @possible_bombs[index]
-        @possible_bombs.delete_at(index)
+        @possible_bombs.delete_at(index) # remove the field randomly chosen from the list
       else
-        p "RANDOMMM"
         field = random_play
       end
     else
@@ -48,6 +48,7 @@ class ArtificialIntelligence
 
     for x in 0..(@tabuleiro.rows-1)
       for y in 0..(@tabuleiro.columns-1)
+
         # Verifica se o campo est� fechado
         if !(@tabuleiro.get_campo(x,y).isaberto?)
           # Captura os neighboors do capo (x,y)
@@ -113,34 +114,31 @@ class ArtificialIntelligence
       end
     end
 
-
-   # printt
   end
 
   def random_play
     linha = rand(0..(@tabuleiro.rows-1))
     coluna = rand(0..(@tabuleiro.columns-1))
 
-    while @tabuleiro.get_campo(linha, coluna).isaberto?
-      linha = rand(0..(@tabuleiro.rows-1))
-      coluna = rand(0..(@tabuleiro.columns-1))
+    if @tabuleiro.get_campo(linha, coluna).isaberto?
+      random_play
     end
 
     {:x => linha, :y => coluna}
   end
 
-  def printt
-    @bomb_fields.each do |a|
-      puts "Array: " << a.to_s
-    end
-  end
-
+=begin
+  Update the list of free and possible bombs?
+    - if the field had been opened by the human user, it's removed from the list
+=end
   def update_lists
     @free_fields.delete_if do |field|
       @tabuleiro.get_campo(field[:x], field[:y]).isaberto?
     end
+
     @possible_bombs.delete_if do |field|
       @tabuleiro.get_campo(field[:x], field[:y]).isaberto?
     end
   end
+
 end #class

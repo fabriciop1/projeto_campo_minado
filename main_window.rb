@@ -65,17 +65,15 @@ class MainWindow < Gtk::Window
 
     jogar.signal_connect("clicked") do |widget|
       hide
-      if small.active?
-        linhas, colunas = 5, 5
-      elsif medium.active?
-        linhas, colunas = 8, 8
-      else
-        linhas, colunas = 12, 12
-      end
 
+      # Verifica escolhido para o tabuleiro
+      linhas = (small.active?) ? 5 : ((medium.active?) ? 8 : 12)
+      colunas = (small.active?) ? 5 : ( (medium.active?) ? 8 : 12)
+
+      # Verify the chosen AI`s level
       level_choosen = (level1.active?) ? 1 : ((level2.active?) ? 2 : 3)
 
-      CampoMinadoApp.new(linhas, colunas, self).set_modal(true)
+      CampoMinadoApp.new(linhas, colunas, self, level_choosen).set_modal(true)
     end
 
     fixed = Gtk::Fixed.new

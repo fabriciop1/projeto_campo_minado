@@ -1,10 +1,15 @@
-a = [{x:1, :y => 2}, "casa", 4,5,6]
-b = [{:x => 1, :y => 2},{:x => 1, :y => 3}]
-t = 0
+@a
+def teste
+  p @a
+  a = rand(4)
+  if @a != a
+    @a = a
+  else
+    teste
+  end
+end
 
-a << b
-
-p a.flatten!.uniq!
-p a
-p a.uniq!
-p a
+teste
+p "Segund"
+teste
+p @a

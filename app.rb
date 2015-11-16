@@ -17,14 +17,14 @@ class CampoMinadoApp < Gtk::Window
 
   PLAYER_MACHINE = "Estudante de PLP"
 
-  def initialize(linhas,colunas, pai)
+  def initialize(linhas,colunas, pai, ai_level)
     super()
     @parent = pai
 
     # Gera um número aleatório de bombas, entre 1/3 e 1/2 do número total de casas
     bombas = rand( Integer((linhas*colunas)/4) .. Integer((linhas*colunas)/3) )
     
-    init_game(linhas,colunas,bombas)
+    init_game(linhas,colunas,bombas, ai_level)
 
     set_title "Campo Minado"
     set_window_position(:center)
@@ -37,16 +37,17 @@ class CampoMinadoApp < Gtk::Window
       #destroy
      # @parent.show
     }
-    override_background_color :normal, Gdk::RGBA::new(1,1,1,1)
-    make_screen
-    @AI = ArtificialIntelligence.new(2,@tabuleiro)
 
+    override_background_color :normal, Gdk::RGBA::new(1,1,1,1)
+
+    make_screen
     show_all
     timer
 
   end
 
-  def init_game(linhas, colunas, bombas)
+  def init_game(linhas, colunas, bombas, level)
+    @activatedLevel = level
     @rows, @columns, @bombas= linhas, colunas, bombas
     @marked_bombs = 0
 
@@ -55,7 +56,8 @@ class CampoMinadoApp < Gtk::Window
     @label = Array.new(linhas){ Array.new(colunas) {}}
 
     @tabuleiro = Tabuleiro.new(linhas, colunas, bombas)
-    @activatedLevel = 1
+
+    @AI = ArtificialIntelligence.new(level,@tabuleiro)
   end
 
   def make_screen
@@ -355,9 +357,7 @@ class CampoMinadoApp < Gtk::Window
   # Method that corresponds to the AI part I of the game (random choices of places to play)
   def machine_play(coord)
     if (is_board_enable?)
-      p coord
-      p coord[:x]
-      p coord[:y]
+
       linha = coord[:x]
       coluna = coord[:y]
 
@@ -403,7 +403,7 @@ class CampoMinadoApp < Gtk::Window
   def reset_board
     window.destroy
     set_modal(false)
-    window = CampoMinadoApp.new(@rows, @columns, @parent).set_modal(true)
+    window = CampoMinadoApp.new(@rows, @columns, @parent,@activatedLevel).set_modal(true)
   end
   # end of method
   
