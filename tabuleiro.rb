@@ -9,14 +9,14 @@ class Tabuleiro
     @campos = Array.new(linhas){ Array.new(colunas){ Celula.new(false) } }
     @campos_abertos = 0
 
-    gera_bombas
+   # gera_bombas(widget)
   end
 
   def get_campo(linha, coluna)
     @campos[linha][coluna]
   end
 
-  def gera_bombas
+  def gera_bombas(widget)
     @bomb_positions = []
     # Tratar a quantidade para qnd for maior que o numero de campos (m.n) do tabuleiro
     for i in (0...@numero_bombas)
@@ -24,7 +24,7 @@ class Tabuleiro
       lin = rand(@rows)
       col = rand(@columns)
 
-      while !(@bomb_positions.find_index({:x => lin, :y => col}).nil?)
+    while !(@bomb_positions.find_index({:x => lin, :y => col}).nil?) || (lin == widget.get_x && col == widget.get_y)        
         lin = rand(@rows)
         col = rand(@columns)
       end
@@ -115,10 +115,9 @@ class Tabuleiro
     end
   end
 
-  # Verifica se os campos restantes são todos bombas, se sim,
-  # retorna true
+  # Verifica se os campos restantes são todos bombas, se sim, retorna true
   def is_done?
-    (((@rows * @columns) - @campos_abertos) == @numero_bombas)
+    return (((@rows * @columns) - @campos_abertos) == @numero_bombas)
   end
 
   # Retorna informações dos vizinhos de campo no tabuleiro
@@ -153,26 +152,49 @@ class Tabuleiro
     @bomb_positions
   end
 
-  def self.get_all_opened(vizinhos)
+  def get_all_opened(vizinhos)
     count = 0
     vizinhos.each do |campo|
       if(campo[:aberto])
         count += 1
       end
     end
-
-    count
+    return count
   end
 
-  def self.get_neighboors_closed(vizinhos)
+  def get_neighboors_closed(x,y)
     list = []
+    vizinhos = get_vizinhos(x,y)
     vizinhos.each do |campo|
       if !(campo[:aberto])
         list << {:x => campo[:x],:y => campo[:y]}
       end
     end
 
-    list
+    return list
+  end
+
+  def get_neighboors_opened(x,y)
+    list = []
+    vizinhos = get_vizinhos(x,y)
+    vizinhos.each do |campo|
+      if (campo[:aberto])
+        list << {:x => campo[:x],:y => campo[:y]}
+      end
+    end
+
+    return list
+  end
+
+  def get_number_closed
+    cont = 0
+    for i in (0..(@rows-1)) do
+      for j in (0..(@columns-1)) do
+       (cont += 1) if !(@campos[i][j].isaberto?)
+      end
+    end
+
+    cont
   end
 
 end #class
