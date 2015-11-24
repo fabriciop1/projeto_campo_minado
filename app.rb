@@ -6,7 +6,7 @@ class CampoMinadoApp < Gtk::Window
 
   # Constantes que armazenam as imagens utilziadas pelo jogo
   SMILE_IMG = "img/smile.png"
-  BOMB_IMG_EXPLODED = "img/bomb3.png"
+  BOMB_IMG_EXPLODED = "img/bomb.png"
   BOMB_IMG = "img/bomb2.png"
   CLOCK_IMG = "img/clock.png"
   BOMB_QUESTION_IMG = "img/bomb_question.png"

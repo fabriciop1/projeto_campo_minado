@@ -37,10 +37,15 @@ class ArtificialIntelligence
         field = random_play
       end
 
-    else
-      p @level
-      field = calculate_probability()
-
+    else #level 3
+      mark_bombs unless @free_fields.size > 0
+      
+      if @free_fields.size > 0
+        field = @free_fields[0]
+        @free_fields.delete_at(0)
+      else
+        field = calculate_probability()
+      end
 
       for x in (0..(@tabuleiro.rows-1))
         for y in (0..(@tabuleiro.columns-1))
@@ -53,7 +58,7 @@ class ArtificialIntelligence
 
     p "Bombas? " << [@bomb_fields].sample.to_s
     p "Livres? " << [@free_fields].sample.to_s
-    p "Possiveis? " << [@possible_bombs].sample.to_s
+   # p "Possiveis? " << [@possible_bombs].sample.to_s
 
     return field
   end
@@ -221,14 +226,13 @@ class ArtificialIntelligence
   def get_smaller_probability
     smaller_value = Float::MAX
     coord_field = Hash.new
-    for i in 1..(@tabuleiro.rows-1)
-      for j in 1..(@tabuleiro.columns-1)
+    for i in 0..(@tabuleiro.rows-1)
+      for j in 0..(@tabuleiro.columns-1)
         if (@probability_fields[i][j] < smaller_value) &&
-            (@probability_fields[i][j] != 1.0) &&
-            (@probability_fields[i][j] != 0.0) &&
+            (@probability_fields[i][j] != 1.0) && (@probability_fields[i][j] != 0.0) &&
             !(@tabuleiro.get_campo(i,j).isaberto?)
-          smaller_value = @probability_fields[i][j]
-          coord_field = {:x => i, :y => j}
+                smaller_value = @probability_fields[i][j]
+                coord_field = {:x => i, :y => j}
         end
       end
     end
