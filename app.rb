@@ -6,7 +6,7 @@ class CampoMinadoApp < Gtk::Window
 
   # Constantes que armazenam as imagens utilziadas pelo jogo
   SMILE_IMG = "img/smile.png"
-  BOMB_IMG_EXPLODED = "img/bomb.png"
+  BOMB_IMG_EXPLODED = "img/bomb3.png"
   BOMB_IMG = "img/bomb2.png"
   CLOCK_IMG = "img/clock.png"
   BOMB_QUESTION_IMG = "img/bomb_question.png"
@@ -17,15 +17,20 @@ class CampoMinadoApp < Gtk::Window
 
   def initialize(level,linhas,colunas, pai)
     super()
+    # Parent of this window
     @parent = pai
+
+    # Intelligence level choosen
     @level = level
 
     # Gera um número de bombas, 1/5 do número total de casas
     bombas = Integer(0.2 * (linhas * colunas))
 
+    level_title = {1 => "Fácil", 2 => "Médio", 3 => "Difícil"}
+
     init_game(linhas,colunas,bombas)
 
-    set_title "Campo Minado"
+    set_title ("Campo Minado   -   Nível " << level_title[level])
     set_window_position(:center)
     set_border_width 1
     set_icon(BOMB_IMG)
@@ -35,21 +40,28 @@ class CampoMinadoApp < Gtk::Window
 
     override_background_color :normal, Gdk::RGBA::new(1,1,1,1)
     make_screen
-    @tabuleiro = Tabuleiro.new(@rows, @columns, @bombas)
-    @AI = ArtificialIntelligence.new(@level,@tabuleiro)
+    @tabuleiro = Tabuleiro.new(@rows, @columns, @number_bombs)
+    @machine_player = ArtificialIntelligence.new(@level,@tabuleiro)
 
     show_all
+
+    # Initialize the timer of the game
     timer
 
   end
 
   def init_game(linhas, colunas, bombas)
-    @rows, @columns, @bombas= linhas, colunas, bombas
+    @rows, @columns, @number_bombs = linhas, colunas, bombas
     @marked_bombs = 0
 
-    # Matriz de bot�es do campo minado
-    @field = Array.new(linhas){ Array.new(colunas) {Board::SpaceField.new('')}}
-    @label = Array.new(linhas){ Array.new(colunas) {}}
+    # Matriz de botões do campo minado
+    @field = Array.new(linhas){ 
+      Array.new(colunas) {
+        Board::SpaceField.new('')
+      }
+    }
+
+    @label_matrix = Array.new(linhas){ Array.new(colunas) {}}
 
     @first_played = true
   end
@@ -61,14 +73,14 @@ class CampoMinadoApp < Gtk::Window
     levelmenu = Gtk::Menu.new
     levels = Gtk::MenuItem.new("Jogo")
 
-    novo_jogo = Gtk::MenuItem.new("Novo")
-    novo_jogo.signal_connect("activate"){
+    new_game_mnu = Gtk::MenuItem.new("Novo")
+    new_game_mnu.signal_connect("activate"){
       window.destroy
       set_modal(false)
       @parent.show
     }
 
-    levelmenu.append(novo_jogo)
+    levelmenu.append(new_game_mnu)
 
     levels.set_submenu(levelmenu)
 
@@ -94,8 +106,10 @@ class CampoMinadoApp < Gtk::Window
 
     @board = Gtk::Grid.new
     # Garante que todas as linhas e colunas possuam o mesmo tamanho
+
     @board.set_column_spacing 3
     @board.set_row_spacing 3
+
     @board.set_row_homogeneous true
     @board.set_column_homogeneous true
 
@@ -124,12 +138,12 @@ class CampoMinadoApp < Gtk::Window
     @lbl_timer.set_markup("<span foreground='gray' size='xx-large' weight='bold'> 000</span>")
 
     # Mostra o número de bombas presentes no campo
-    @lbl_bombas = Gtk::Label.new
-    @lbl_bombas.set_markup("<span foreground='gray' size='xx-large' weight='bold'>" << ( (@bombas < 10) ? "00" << @bombas.to_s : "0" << @bombas.to_s ) << "</span>")
+    @lbl_bombs = Gtk::Label.new
+    @lbl_bombs.set_markup("<span foreground='gray' size='xx-large' weight='bold'>" << ( (@number_bombs < 10) ? "00" << @number_bombs.to_s : "0" << @number_bombs.to_s ) << "</span>")
 
     # Box horizontal que engloba o label de bombas e uma imagem
     hbox_bombs = Gtk::Box.new(:horizontal, 1)
-    hbox_bombs.pack_start(@lbl_bombas, :expand => false, :fill => false, :padding => 10)
+    hbox_bombs.pack_start(@lbl_bombs, :expand => false, :fill => false, :padding => 10)
     hbox_bombs.pack_start(Gtk::Image.new(:file => BOMB_IMG), :expand => false, :fill => false, :padding => 0)
 
     # Box horizontal que engloba o timer e uma imagem
@@ -140,13 +154,13 @@ class CampoMinadoApp < Gtk::Window
     halg_timer = Gtk::Alignment.new 1, 1, 0, 1
     halg_timer.add hbox_timer
 
-    halg_lbl_bombas = Gtk::Alignment.new 1, 1, 0, 1
-    halg_lbl_bombas.add hbox_bombs
+    halg_lbl_bombs = Gtk::Alignment.new 1, 1, 0, 1
+    halg_lbl_bombs.add hbox_bombs
 
     # box "rodape" contem os labels de bombas e timer
     hbox_footer = Gtk::Box.new(:horizontal, 1)
     hbox_footer.pack_start(halg_timer, :expand => false, :fill => false, :padding => 0)
-    hbox_footer.pack_start(halg_lbl_bombas, :expand => true, :fill => true, :padding => 0)
+    hbox_footer.pack_start(halg_lbl_bombs, :expand => true, :fill => true, :padding => 0)
 
     # Place the board in a frame, so that it can have a border around it
     frm_inner_box = Gtk::Box.new(:horizontal, 1).pack_start(@board, :expand => false, :fill => false, :padding => 3)
@@ -200,15 +214,15 @@ class CampoMinadoApp < Gtk::Window
           end
 
           @board.set_sensitive(false)
-          perdeu = campo_clicado(_widget)
+          has_lost = clicked_field(_widget)
 
-          if !perdeu
-            field_choosen = @AI.choose_field(@tabuleiro)
+          if !has_lost
+            field_choosen = @machine_player.choose_field(@tabuleiro)
 
             # Cria uma nova Thread para a IA jogar, e espera 1 segundo 
             # para que o jogador possa ver onde a IA jogou
 
-            player_ia = Thread.new {
+            player_machine_turn = Thread.new {
               change_lbl_player("#{PLAYER_MACHINE} está pensando...")
               sleep(1)
               @board.set_sensitive(true)
@@ -222,7 +236,7 @@ class CampoMinadoApp < Gtk::Window
   end
 
   # Comandos executados quando um botão (espaço) do campo é clicado
-  def campo_clicado(_widget)
+  def clicked_field(_widget)
 
     # O campo clicado e uma bomba?
     if @tabuleiro.get_campo(_widget.get_x,_widget.get_y).isbomba?
@@ -242,6 +256,7 @@ class CampoMinadoApp < Gtk::Window
       show_message("GAME OVER!")
       change_lbl_player("#{PLAYER_MACHINE} lives!")
 
+      # Retorna true se a IA perder
       return true
     else
 
@@ -249,8 +264,8 @@ class CampoMinadoApp < Gtk::Window
 
       @tabuleiro.abre_campo(_widget.get_x,_widget.get_y)
 
-      bool = abre_vizinhos("user")
-      if bool # Para verificar se houve empate quando a IA jogou e não entrar em !perdeu 
+      bool = open_neighboors("user")
+      if bool # Para verificar se houve empate quando a IA jogou e não entrar em !has_lost 
         return true
       end
     end
@@ -258,7 +273,7 @@ class CampoMinadoApp < Gtk::Window
     return false
   end
 
-  def abre_vizinhos (player)
+  def open_neighboors (player)
     # Atribui uma cor ao campo aberto, dependendo de quem jogou
     if(player == "user")
       color = "blue"
@@ -268,31 +283,34 @@ class CampoMinadoApp < Gtk::Window
 
     for i in 0..(@rows-1)
       for j in 0..(@columns-1)
-        tabuleiro = @tabuleiro.get_campo(i,j)
+        current_field = @tabuleiro.get_campo(i,j)
 
-        if tabuleiro.isaberto?
+        if current_field.isaberto?
           if (@field[i][j].image != nil ) # verificar se existe uma bomba marcada erroneamente no field
             @field[i][j].image = nil
             @marked_bombs -= 1
-            @bombas_restantes = (@bombas - @marked_bombs)
-            @lbl_bombas.set_markup("<span foreground='gray' size='xx-large' weight='bold'>" << ( (@bombas_restantes < 10) ? "00" << @bombas_restantes.to_s : "0" << @bombas_restantes.to_s ) << "</span>")
+            @number_bombs_left = (@number_bombs - @marked_bombs)
+            @lbl_bombs.set_markup("<span foreground='gray' size='xx-large' weight='bold'>" << ( (@number_bombs_left < 10) ? "00" << @number_bombs_left.to_s : "0" << @number_bombs_left.to_s ) << "</span>")
           end
 
           @field[i][j].hide()
-          @label[i][j] = Gtk::Label.new #(:label => ((tabuleiro.vizinhos == 0) ? "<large>5</large> " : tabuleiro.vizinhos.to_s))
-          vizinhos = (tabuleiro.vizinhos == 0) ? " - " : tabuleiro.vizinhos.to_s
-          @label[i][j].set_markup("<span foreground='"<< color << "' size='large'>" << (vizinhos) << "</span>")
+          @label_matrix[i][j] = Gtk::Label.new #(:label => ((tabuleiro.vizinhos == 0) ? "<large>5</large> " : tabuleiro.vizinhos.to_s))
+          lbl_vizinhos = (current_field.vizinhos == 0) ? " - " : current_field.vizinhos.to_s
+          @label_matrix[i][j].set_markup("<span foreground='"<< color << "' size='large'>" << (lbl_vizinhos) << "</span>")
 
-          @board.attach @label[i][j], i, j, 1,1
-          @label[i][j].show
+          # Attach the label on the (x,y) board`s position
+          @board.attach(@label_matrix[i][j], i, j, 1,1)
+
+          # Make the label visible on the board
+          @label_matrix[i][j].show
         end
       end
     end
-    bool = verifica_progresso
+    bool = verify_game_progress
     return bool
   end
 
-  def verifica_progresso
+  def verify_game_progress
     if @tabuleiro.is_done?
       show_all_bombs
       show_message("Empate!")
@@ -300,16 +318,17 @@ class CampoMinadoApp < Gtk::Window
       @board.set_sensitive(false)
       return true
     end
-    return false
+
+    false
   end
 
   def verify_right_click(i, j)
     @field[i][j].signal_connect("button_press_event") do |widget, event|
       if (event.button == 3)
 
-        if @marked_bombs <= @bombas
+        if @marked_bombs <= @number_bombs
           # Se o botão aida não tiver sido marcado
-          if (@field[i][j].image == nil) && (@marked_bombs < @bombas)
+          if (@field[i][j].image == nil) && (@marked_bombs < @number_bombs)
 
             @marked_bombs += 1
             image = Gtk::Image.new(:file => BOMB_QUESTION_IMG)
@@ -323,8 +342,8 @@ class CampoMinadoApp < Gtk::Window
             @field[i][j].image = nil
           end
         end
-        @bombas_restantes = (@bombas - @marked_bombs)
-        @lbl_bombas.set_markup("<span foreground='gray' size='xx-large' weight='bold'>" << ( (@bombas_restantes < 10) ? "00" << @bombas_restantes.to_s : "0" << @bombas_restantes.to_s ) << "</span>")
+        @number_bombs_left = (@number_bombs - @marked_bombs)
+        @lbl_bombs.set_markup("<span foreground='gray' size='xx-large' weight='bold'>" << ( (@number_bombs_left < 10) ? "00" << @number_bombs_left.to_s : "0" << @number_bombs_left.to_s ) << "</span>")
       end
     end
   end
@@ -340,12 +359,9 @@ class CampoMinadoApp < Gtk::Window
     end
   end
 
-  # Method that corresponds to the AI part I of the game (random choices of places to play)
+  # Method that corresponds to the @machine_player part I of the game (random choices of places to play)
   def machine_play(coord)
     if (is_board_enable?)
-      p coord
-      p coord[:x]
-      p coord[:y]
       linha = coord[:x]
       coluna = coord[:y]
 
@@ -354,7 +370,7 @@ class CampoMinadoApp < Gtk::Window
         if !(@tabuleiro.get_campo(linha,coluna).isbomba?)
 
           @tabuleiro.abre_campo(linha,coluna)
-          abre_vizinhos("AI")
+          open_neighboors("@machine_player")
           change_lbl_player("#{PLAYER_MACHINE}: Sua vez...")
 
         else
@@ -396,11 +412,10 @@ class CampoMinadoApp < Gtk::Window
   # end of method
 
   def show_all_bombs
-    @tabuleiro.get_bomb_positions.each {
-        |bomb|
+    @tabuleiro.get_bomb_positions().each { |bomb|
 
       # Mosta um ícone de bomba no local clicado
-      @board.attach Gtk::Image.new(:file => BOMB_IMG_EXPLODED).show, bomb[:x], bomb[:y], 1,1
+      @board.attach(Gtk::Image.new(:file => BOMB_IMG_EXPLODED).show, bomb[:x], bomb[:y], 1,1)
 
       @field[bomb[:x]][bomb[:y]].hide
     }

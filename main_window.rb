@@ -54,30 +54,37 @@ class MainWindow < Gtk::Window
     frame.set_hexpand true
     frame.set_vexpand true
     frame.override_background_color(:normal, Gdk::RGBA.new(0.9,0.9,0.9, 0.4))
-    frame.add Gtk::Box.new(:vertical,1).pack_start(hbox, :expand => true, :true => true, :padding => 10).pack_start(Gtk::Label.new(" "), :expand => true, :true => true, :padding => 10)
+    frame.add Gtk::Box.new(:vertical,1)
+                  .pack_start(hbox, :expand => true, :true => true, :padding => 10)
+                  .pack_start(Gtk::Label.new(" "), :expand => true, :true => true, :padding => 10)
 
     lbl = Gtk::Label.new
     lbl.set_markup("<span size='large'> Jogar </span>")
-    jogar = Gtk::Button.new
-    jogar.add lbl
-    jogar.set_size_request 80,40
 
-    jogar.signal_connect("clicked") do |widget|
+    play_btn = Gtk::Button.new
+    play_btn.add lbl
+    play_btn.set_size_request 80,40
+
+    play_btn.signal_connect("clicked") do |widget|
+      # hide this window in order to show only the window which contains the field to play
       hide
-      linhas = small.active? ? 8 : (medium.active? ? 12 : 14)
-      colunas = small.active? ? 8 : (medium.active? ? 12 : 14)
+      
+      rows = small.active? ? 8 : (medium.active? ? 12 : 14)
+      columns = small.active? ? 8 : (medium.active? ? 12 : 14)
 
       level_chosen = (level1.active?) ? 1 : ((level2.active?) ? 2 : 3)
 
-      CampoMinadoApp.new(level_chosen, linhas, colunas, self).set_modal(true)
+      # Initiate the game
+      CampoMinadoApp.new(level_chosen, rows, columns, self).set_modal(true)
     end
 
-    fixed = Gtk::Fixed.new
-    fixed.put(logo, 0, 0)
-    fixed.put(frame, 250, 30)
-    fixed.put(jogar, 325, 190)
+    # Place the components of the windows on fixed points
+    layout_fixed = Gtk::Fixed.new
+    layout_fixed.put(logo, 0, 0)
+    layout_fixed.put(frame, 250, 30)
+    layout_fixed.put(play_btn, 325, 190)
 
-    add fixed
+    add layout_fixed
   end
 end
 

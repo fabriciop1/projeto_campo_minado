@@ -34,6 +34,7 @@ class Tabuleiro
 
       # Adiciona a posição (x,y) da bomba à uma lista
       @bomb_positions << {:x => lin, :y => col}
+
     end
 
     # verifica
@@ -171,7 +172,7 @@ class Tabuleiro
       end
     end
 
-    return list
+    list
   end
 
   def get_neighboors_opened(x,y)
@@ -183,7 +184,7 @@ class Tabuleiro
       end
     end
 
-    return list
+    list
   end
 
   def get_number_closed
