@@ -292,17 +292,18 @@ class CampoMinadoApp < Gtk::Window
             @number_bombs_left = (@number_bombs - @marked_bombs)
             @lbl_bombs.set_markup("<span foreground='gray' size='xx-large' weight='bold'>" << ( (@number_bombs_left < 10) ? "00" << @number_bombs_left.to_s : "0" << @number_bombs_left.to_s ) << "</span>")
           end
+          if @label_matrix[i][j].nil?
+            @field[i][j].hide()
+            @label_matrix[i][j] = Gtk::Label.new #(:label => ((tabuleiro.vizinhos == 0) ? "<large>5</large> " : tabuleiro.vizinhos.to_s))
+            lbl_vizinhos = (current_field.vizinhos == 0) ? " - " : current_field.vizinhos.to_s
+            @label_matrix[i][j].set_markup("<span foreground='"<< color << "' size='large'>" << (lbl_vizinhos) << "</span>")
 
-          @field[i][j].hide()
-          @label_matrix[i][j] = Gtk::Label.new #(:label => ((tabuleiro.vizinhos == 0) ? "<large>5</large> " : tabuleiro.vizinhos.to_s))
-          lbl_vizinhos = (current_field.vizinhos == 0) ? " - " : current_field.vizinhos.to_s
-          @label_matrix[i][j].set_markup("<span foreground='"<< color << "' size='large'>" << (lbl_vizinhos) << "</span>")
+            # Attach the label on the (x,y) board`s position
+            @board.attach(@label_matrix[i][j], i, j, 1,1)
 
-          # Attach the label on the (x,y) board`s position
-          @board.attach(@label_matrix[i][j], i, j, 1,1)
-
-          # Make the label visible on the board
-          @label_matrix[i][j].show
+            # Make the label visible on the board
+            @label_matrix[i][j].show
+          end
         end
       end
     end

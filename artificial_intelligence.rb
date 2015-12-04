@@ -169,7 +169,7 @@ class ArtificialIntelligence
   
   # Define the 3rd level of the artificial intelligence, where random plays are avoided
   # Math is based on the probability of the union of n events: P(A union B) = P(A) + P(B) - P(A)*P(B)
-  def calculate_probability()
+  def calculate_probability
     for i in 0..(@board.rows-1)
       for j in 0..(@board.columns-1)
 
