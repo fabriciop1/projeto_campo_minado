@@ -4,6 +4,7 @@ require_relative 'artificial_intelligence.rb'
 
 class MainWindow < Gtk::Window
   LOGO_IMG = "img/big_bomb.png"
+  
   def initialize
     super()
     set_title "Campo Minado"
@@ -54,9 +55,7 @@ class MainWindow < Gtk::Window
     frame.set_hexpand true
     frame.set_vexpand true
     frame.override_background_color(:normal, Gdk::RGBA.new(0.9,0.9,0.9, 0.4))
-    frame.add Gtk::Box.new(:vertical,1)
-                  .pack_start(hbox, :expand => true, :true => true, :padding => 10)
-                  .pack_start(Gtk::Label.new(" "), :expand => true, :true => true, :padding => 10)
+    frame.add Gtk::Box.new(:vertical,1).pack_start(hbox, :expand => true, :true => true, :padding => 10).pack_start(Gtk::Label.new(" "), :expand => true, :true => true, :padding => 10)
 
     lbl = Gtk::Label.new
     lbl.set_markup("<span size='large'> Jogar </span>")

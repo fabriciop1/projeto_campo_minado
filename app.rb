@@ -4,7 +4,7 @@ require_relative 'tabuleiro'
 
 class CampoMinadoApp < Gtk::Window
 
-  # Constantes que armazenam as imagens utilziadas pelo jogo
+  # Constantes que armazenam as variaveis utilziadas pelo jogo
   SMILE_IMG = "img/smile.png"
   BOMB_IMG_EXPLODED = "img/bomb3.png"
   BOMB_IMG = "img/bomb2.png"
@@ -57,7 +57,7 @@ class CampoMinadoApp < Gtk::Window
     # Matriz de botões do campo minado
     @field = Array.new(linhas){ 
       Array.new(colunas) {
-        Board::SpaceField.new('')
+        Board::SpaceField.new()
       }
     }
 

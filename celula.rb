@@ -6,9 +6,8 @@ class Celula
   def initialize (bomba)
     @bomba = false
     @aberto = false
-    @vizinhos = 0
+    @vizinhos = 0 #vizinhos que são bombas ao redor de um campo 
   end
-
 
   def isbomba?
     @bomba

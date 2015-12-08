@@ -16,7 +16,7 @@ class Tabuleiro
     @campos[linha][coluna]
   end
 
-  def gera_bombas(widget)
+  def gera_bombas(widget) # Parâmetro widget = posição clicada pelo jogador, que nunca será bomba
     @bomb_positions = []
     # Tratar a quantidade para qnd for maior que o numero de campos (m.n) do tabuleiro
     for i in (0...@numero_bombas)
@@ -24,6 +24,10 @@ class Tabuleiro
       lin = rand(@rows)
       col = rand(@columns)
 
+    # Já existe um elemento (lin,col) no vetor? 
+    # Sim -> Gera (lin, col) novamente. Não -> Não entra no while 
+    # A linha e coluna gerada é a mesma que a passada como parâmetro?
+    # Sim -> gere novamente. Não? Não entra no while
     while !(@bomb_positions.find_index({:x => lin, :y => col}).nil?) || (lin == widget.get_x && col == widget.get_y)        
         lin = rand(@rows)
         col = rand(@columns)
@@ -31,13 +35,12 @@ class Tabuleiro
 
       @campos[lin][col].bomba = true
 
-
       # Adiciona a posição (x,y) da bomba à uma lista
       @bomb_positions << {:x => lin, :y => col}
 
     end
 
-    # verifica
+    # Bombas geradas, Verifica os vizinhos de toda a matriz para saber a quantidade de bombas ao redor
     verifica_vizinhos
   end
 
